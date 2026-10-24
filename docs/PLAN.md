@@ -96,11 +96,12 @@ Tamamlanan ilk dilim:
 - İki contract deploy edildi; gerçek transfer ve event-only seed transaction'ları RPC ve API üzerinden doğrulandı.
 - **Kabul:** Explorer ve RPC iki işlemi aynı chain'de gösterir.
 
-### B4 — Gerçek RPC doğrulaması ve public backend (P0, `TODO`)
+### B4 — Gerçek RPC doğrulaması ve public backend (P0, `IN PROGRESS`)
 
 - B2'yi B3'ün gerçek adres/hash'leriyle integration test et.
 - Render/Railway/Fly.io benzeri long-running hostta HTTPS backend.
 - Fahad'ın kesin frontend origin'ini CORS allowlist'e ekle.
+- Render Blueprint ücretsiz web service ve RPC-independent `/health/live` için hazır; ücretsiz planda SQLite verisi ephemeral ve watcher uyku sırasında durur.
 - **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır.
 
 ### B5 — Persistence, watcher ve notifications (P1, `IN PROGRESS`)
@@ -109,7 +110,7 @@ Tamamlanan ilk dilim:
 - Idempotent `chainId:txHash:logIndex` kayıtları. **DONE**
 - Finalized-block polling, bounded range backfill ve restart recovery. **DONE**
 - Monitored wallet için indexed `from`/`to` topic taraması. **DONE**
-- `SUSPICIOUS_EVENT`/`NEEDS_REVIEW` email transport, template ve retry queue. **IMPLEMENTED; live provider credentials bekliyor**
+- `SUSPICIOUS_EVENT`/`NEEDS_REVIEW` email transport, template ve retry queue. **DONE; live Resend API acceptance doğrulandı**
 - `GET /api/v1/findings` ve `WS /api/v1/events`.
 
 ---
@@ -124,6 +125,6 @@ Tamamlanan ilk dilim:
 | Fixture analyzer/API | Salik | Ortak tipler | DONE | 21 test + iki gerçek tx API doğrulaması |
 | Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
 | Quick Demo + final API UI | Fahad | B2/B3 | IN PROGRESS | Gerçek hashlerle UI |
-| Public backend | Salik | B2/B3 | TODO | HTTPS health/analyze |
+| Public backend | Salik | B2/B3 | IN PROGRESS | Render config hazır; external service creation bekliyor |
 | Public frontend | Fahad | B4 | TODO | HTTPS UI |
 | 90 saniyelik demo | Ortak | Tüm P0 | TODO | İki tx doğru ayrılır |

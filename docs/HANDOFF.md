@@ -61,6 +61,14 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Email transport Resend-compatible HTTP API kullanır; HTML escape, evidence template ve failed-delivery retry uygulanmıştır.
 - 7 dosyada 30 backend testi geçer; 101 normal + 1 suspicious event, duplicate cycle, provider failure retry ve process restart kapsanır.
 - Real RPC backfill transaction hash girdisi olmadan event-only seed'i otomatik bulup `SUSPICIOUS_EVENT` üretti.
+- Resend test sender üzerinden gerçek API acceptance başarıyla doğrulandı; pending finding `alerted_at` ile tamamlandı. Inbox görünürlüğü kullanıcı teyidi bekler.
+
+## Public backend deployment hazırlığı
+
+- Railway signup kapalı olduğu için Render seçildi.
+- `render.yaml` ücretsiz Node web service, Frankfurt region, ephemeral `/tmp/ghostguard.db`, public config ve dashboard-entered secrets içerir. Ücretsiz host restart/spin-down durumunda SQLite verisi kaybolabilir ve watcher durur.
+- `/health/live` RPC-independent liveness endpoint'i eklendi ve testlidir.
+- Render service/account oluşturma ve public URL doğrulaması henüz yapılmadı.
 
 ## Tasarım sınırları
 
@@ -88,14 +96,13 @@ npm run check
 ## Blocker'lar
 
 - Public backend/frontend URL yok.
-- Email provider credential/verified sender olmadığı için gerçek email gönderimi doğrulanmadı.
 - Findings HTTP/WebSocket delivery uçları henüz yok.
 
 ## Sonraki üç görev
 
-1. **Salik:** Public backend'i doğrulanmış RPC/contract config'iyle deploy et.
+1. **Salik:** Public repo URL + `render.yaml` ile Render backend service oluştur; secret env değerlerini dashboard'dan gir.
 2. **Fahad + Salik:** Local/public frontend entegrasyonunu gerçek iki hash'le doğrula.
-3. **P1:** Email provider ile gerçek inbox delivery doğrula; findings HTTP/WebSocket uçlarını tamamla.
+3. **P1:** Findings HTTP/WebSocket uçlarını tamamla ve public hostta watcher sürekliliğini doğrula.
 
 ## Resume protokolü
 
