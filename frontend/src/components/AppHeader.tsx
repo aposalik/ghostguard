@@ -1,4 +1,12 @@
-export function AppHeader() {
+import { ThemeToggle } from './ThemeToggle'
+import type { Theme } from '../hooks/useTheme'
+
+interface AppHeaderProps {
+  theme?: Theme
+  onToggleTheme?: () => void
+}
+
+export function AppHeader({ theme = 'light', onToggleTheme }: AppHeaderProps) {
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -30,6 +38,8 @@ export function AppHeader() {
         </a>
 
         <div className="header-meta">
+          {onToggleTheme && <ThemeToggle theme={theme} onToggle={onToggleTheme} />}
+
           <a
             href="https://testnet.monadscan.com"
             target="_blank"

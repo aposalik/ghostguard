@@ -2,116 +2,52 @@
 
 ## Proje özeti
 
-GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve receipt durumunu inceleyerek kontrollü `DemoToken` ile `DemoEventOnly` senaryolarını ayırır. Üretim fraud detector iddiası yoktur.
+GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve receipt durumunu inceleyerek kontrollü `DemoToken` ile `DemoEventOnly` senaryolarını ayırır.
 
 ## Sahiplik
 
-- **Fahad:** `frontend/`, UI/UX, API tüketimi, frontend deploy ve sunum.
-- **Salik:** `backend/`, `contracts/`, RPC/analyzer, testnet ve backend deploy.
+- **Fahad (Developer A):** `frontend/`, UI/UX, API tüketimi, frontend deploy ve sunum.
+- **Salik (Developer B):** `backend/`, `contracts/`, RPC/analyzer, testnet ve backend deploy.
 - **Ortak:** `shared/types/index.ts`, `docs/API_CONTRACT.md`.
 
 ## Git durumu
 
 - Repo: `https://github.com/aposalik/ghostguard.git`
-- Yerel: `/Users/abdullahsalik/.openclaw/workspace/Ghostguard`
-- Backend branch: `feature/backend-analyzer`
-- Base: `511a866` (`origin/main`)
-- Backend commit konusu: `feat: add deterministic receipt analyzer API`
-- Backend branch push/PR: yapılmadı
-- Zincir deployment: yok
+- Aktif branch: `feature/frontend-dashboard`
+- Base: `origin/main`
+- Açık PR: `#6` (`https://github.com/aposalik/ghostguard/pull/6`)
 
-## Son tamamlanan backend dilimi
+## Son tamamlanan frontend işleri (Developer A)
 
-- Strict env configuration.
-- Timeout'lu ve response-shape doğrulamalı JSON-RPC adapter.
-- Deterministik receipt/log analyzer.
-- Transfer topic/from/to/amount decoding.
-- Trusted DemoToken/EventOnly config'ine göre verified/suspicious/review ayrımı.
-- Fastify `GET /health` ve `POST /api/v1/transactions/analyze`.
-- Canonical 400/404/503/500 error shape ve CORS allowlist.
-- 4 dosyada 21 test; lint/typecheck/build geçti.
+1. **Light Mode & Tema Değiştirici (`useTheme.ts`, `ThemeToggle.tsx`):** Varsayılan tema modern açık mod yapıldı; tek tıkla karanlık moda geçiş butonu eklendi.
+2. **İnsanileştirilmiş Dil ve Tipografi:** Klişe yapay zeka metinleri yerine doğrudan güvenlik gerçeklerine odaklanan doğal başlıklar ("Did tokens actually move, or was it just a fake event?") uygulandı.
+3. **30 Saniyelik Hakem Rehberi (`VulnerabilityExplainer.tsx`):** EVM transfer spoofing mantığını (Decoy emisyonu -> Sahte başarı -> GhostGuard Emitter kontrolü) 3 adımda özetleyen kart yapısı eklendi.
+4. **Quick Demo Scenario Switcher:** Scenario A (Legitimate Transfer -> Verified yeşil rozet), Scenario B (Spoofed Decoy -> Emitter Mismatch uyarısı), Scenario C (Needs Review) tek tıkla yüklenip incelenebilir.
+5. **Evidence UI & Badges:** 5 sınıfa özel rozetler, Monad Explorer (`testnet.monadexplorer.com`) doğrudan linkleri, ve "Emitter Mismatch" vurgu kutusu entegre edildi.
+6. **Live Monitor Feed:** İncelenen olaylar geçmişte listelenir; tıklanan kart anında Evidence Inspector'da açılır.
+7. **Monad 3D Tasarım:** Monad Foundation paletine uygun tema-duyarlı (açık/koyu mod uyumlu) 3D Canvas animasyonu.
+8. **API Entegrasyonu & Hata Tanıları:** `POST /api/v1/transactions/analyze` ve `GET /health` istemcisi, istemci tarafı hash doğrulaması, HTTP 400/404/502/503 tanıları, "Try Again" butonu ve amber "Demo Simulation Mode Active (Backend offline)" bandı entegre edildi.
+9. **WebSocket İstemcisi & Canlı Bildirimler (P1):** WebSocket client hook (`useLiveEvents.ts`), exponential backoff ve HTTP fallback (`GET /api/v1/findings`), LiveToast bildirim sistemi (`LiveToast.tsx`).
+10. **Testler ve Build:** `npm run check` (oxlint 0 warning/error, typecheck, 46 unit test [16 frontend + 30 backend], production build) 0 hata ile doğrulandı.
 
-## Son tamamlanan contract dilimi
+## Son tamamlanan backend & sözleşme işleri (Developer B)
 
-- Foundry 1.8.6 kullanılabilir; Solidity 0.8.28 ve optimizer ayarları sabitlendi.
-- `DemoToken` gerçek ERC-20 balance değişimi ve event üretir.
-- `DemoEventOnly` token state değiştirmeden, yalnızca deploy eden owner üzerinden Transfer biçimli event üretir.
-- `forge fmt --check --root contracts` geçti.
-- 3 Foundry testi geçti: gerçek transfer, event-only balance ayrımı ve yetkisiz çağrı reddi.
+1. **Foundry Demo Sözleşmeleri:** `DemoToken` (`0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`) ve `DemoEventOnly` (`0xa7836d1245593d16929a3Eea3Aa34461EF08F474`).
+2. **Monad Testnet Seed İşlemleri:**
+   - Gerçek transfer: `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f` → `VERIFIED_DEMO_TRANSFER`.
+   - Event-only: `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4` → `SUSPICIOUS_EVENT`.
+3. **Backend API & Watcher:** Fastify HTTP/RPC client, SQLite persistence, Resend email alerting, 30 backend testi.
+4. **Render Hazırlığı:** Ücretsiz web service blueprint'i (`render.yaml`).
 
-## Aktif deployment dilimi
-
-- Resmî Monad Testnet endpoint'i `https://testnet-rpc.monad.xyz`, chain ID `10143`; live read-only probe doğrulandı.
-- `DeployAndSeed.s.sol` local ve gerçek RPC üzerinde broadcast edilmeden başarıyla simüle edildi.
-- Simülasyon iki deployment + iki seed çağrısı için 767094 tahmini gas ve yaklaşık 0.154952988 testnet MON üst sınırı verdi.
-- Makinede yalnızca önceki MonVault projesine isimlendirilmiş keystore görüldü; GhostGuard için açık karar olmadan kullanılmadı.
-
-## Tamamlanan testnet doğrulaması
-
-- DemoToken: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`.
-- DemoEventOnly: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
-- Gerçek transfer: `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f` → `VERIFIED_DEMO_TRANSFER`.
-- Event-only: `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4` → `SUSPICIOUS_EVENT`.
-- Dört deployment/seed receipt'i başarılı; gerçek transfer recipient'a `25 GGD` yazdı.
-
-## Aktif P1 watcher/email dilimi
-
-- `TransferWatcher` finalized block range'lerini 100 blokluk parçalarla tarar; monitored addresses hem `from` hem `to` topic'inde aranır.
-- SQLite checkpoint/findings restart sonrası korunur ve canonical event identity ile deduplicate edilir.
-- Email transport Resend-compatible HTTP API kullanır; HTML escape, evidence template ve failed-delivery retry uygulanmıştır.
-- 7 dosyada 30 backend testi geçer; 101 normal + 1 suspicious event, duplicate cycle, provider failure retry ve process restart kapsanır.
-- Real RPC backfill transaction hash girdisi olmadan event-only seed'i otomatik bulup `SUSPICIOUS_EVENT` üretti.
-- Resend test sender üzerinden gerçek API acceptance başarıyla doğrulandı; pending finding `alerted_at` ile tamamlandı. Inbox görünürlüğü kullanıcı teyidi bekler.
-
-## Public backend deployment hazırlığı
-
-- Railway signup kapalı olduğu için Render seçildi.
-- `render.yaml` ücretsiz Node web service, Frankfurt region, ephemeral `/tmp/ghostguard.db`, public config ve dashboard-entered secrets içerir. Ücretsiz host restart/spin-down durumunda SQLite verisi kaybolabilir ve watcher durur.
-- `/health/live` RPC-independent liveness endpoint'i eklendi ve testlidir.
-- Render service/account oluşturma ve public URL doğrulaması henüz yapılmadı.
-
-## Tasarım sınırları
-
-- Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.
-- Trusted config yoksa request adresi comparison context olabilir, verified kararı üretmez.
-- Reverted receipt için findings boş kalır; başarı uydurulmaz.
-- Balance-delta kontrolü henüz yok; ilgili check `UNKNOWN`.
-- Unknown emitter `NEEDS_REVIEW`; fraud etiketi verilmez.
-
-## Çalıştırma
+## Doğrulanan komutlar
 
 ```bash
 npm install
-# MONAD_RPC_URL ve gerekli public config'i güvenli environment üzerinden sağla
-npm run dev:backend
+npm run check  # lint (0 error/warning) + typecheck (0 error) + 46 test + build başarılı
 ```
 
-Doğrulama:
+## Sonraki adımlar
 
-```bash
-npm audit --audit-level=moderate
-npm run check
-```
-
-## Blocker'lar
-
-- Public backend/frontend URL yok.
-- Findings HTTP/WebSocket delivery uçları henüz yok.
-
-## Sonraki üç görev
-
-1. **Salik:** Public repo URL + `render.yaml` ile Render backend service oluştur; secret env değerlerini dashboard'dan gir.
-2. **Fahad + Salik:** Local/public frontend entegrasyonunu gerçek iki hash'le doğrula.
-3. **P1:** Findings HTTP/WebSocket uçlarını tamamla ve public hostta watcher sürekliliğini doğrula.
-
-## Resume protokolü
-
-`AGENTS.md` → `docs/PROJECT_CONTEXT.md` → bu dosya → `docs/STATUS.md` → `docs/PLAN.md` → `docs/API_CONTRACT.md` okuyun. Sonra:
-
-```bash
-git status --short --branch
-git log -5 --oneline --decorate
-npm run check
-```
-
-Diğer geliştiricinin owned dizinini koordinasyonsuz değiştirmeyin.
+1. `feature/frontend-dashboard` commit'ini GitHub'a push et (PR #6 güncellenir).
+2. Public URL dağıtımı (Render & Vercel).
+3. 90 saniyelik hakem sunumu provası (`docs/DEMO.md`).

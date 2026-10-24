@@ -141,11 +141,20 @@ export function Monad3DScene() {
         }
       }
 
+      // Detect theme from html element
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light'
+
       // Draw background glow aura
       const auraGradient = ctx.createRadialGradient(cx, cy, 10, cx, cy, 140 * dpr)
-      auraGradient.addColorStop(0, 'rgba(110, 84, 255, 0.28)')
-      auraGradient.addColorStop(0.5, 'rgba(0, 245, 212, 0.12)')
-      auraGradient.addColorStop(1, 'rgba(14, 9, 28, 0)')
+      if (isLight) {
+        auraGradient.addColorStop(0, 'rgba(91, 62, 255, 0.16)')
+        auraGradient.addColorStop(0.5, 'rgba(2, 132, 199, 0.08)')
+        auraGradient.addColorStop(1, 'rgba(248, 249, 254, 0)')
+      } else {
+        auraGradient.addColorStop(0, 'rgba(110, 84, 255, 0.28)')
+        auraGradient.addColorStop(0.5, 'rgba(0, 245, 212, 0.12)')
+        auraGradient.addColorStop(1, 'rgba(14, 9, 28, 0)')
+      }
       ctx.fillStyle = auraGradient
       ctx.beginPath()
       ctx.arc(cx, cy, 140 * dpr, 0, Math.PI * 2)
@@ -155,16 +164,18 @@ export function Monad3DScene() {
       const projected = vertices.map(project)
 
       // Draw wireframe edges
-      ctx.lineWidth = 1.4 * dpr
+      ctx.lineWidth = (isLight ? 1.6 : 1.4) * dpr
       edges.forEach(([i1, i2]) => {
         const p1 = projected[i1]
         const p2 = projected[i2]
         if (!p1 || !p2) return
 
         const depth = (p1.scale + p2.scale) / 2
-        const alpha = Math.max(0.12, Math.min(0.85, (depth - 0.4) * 1.5))
+        const alpha = Math.max(0.18, Math.min(0.9, (depth - 0.4) * (isLight ? 1.8 : 1.5)))
 
-        ctx.strokeStyle = `rgba(131, 110, 249, ${alpha})`
+        ctx.strokeStyle = isLight
+          ? `rgba(91, 62, 255, ${alpha})`
+          : `rgba(131, 110, 249, ${alpha})`
         ctx.beginPath()
         ctx.moveTo(p1.x, p1.y)
         ctx.lineTo(p2.x, p2.y)
@@ -176,9 +187,13 @@ export function Monad3DScene() {
         const size = (idx < 7 ? 4 : 2.5) * p.scale * dpr
         const isCore = idx >= 7
 
-        ctx.fillStyle = isCore ? '#00F5D4' : '#836EF9'
-        ctx.shadowColor = isCore ? '#00F5D4' : '#836EF9'
-        ctx.shadowBlur = 12 * dpr
+        const vertexColor = isLight
+          ? (isCore ? '#0284C7' : '#5B3EFF')
+          : (isCore ? '#00F5D4' : '#836EF9')
+
+        ctx.fillStyle = vertexColor
+        ctx.shadowColor = vertexColor
+        ctx.shadowBlur = (isLight ? 8 : 12) * dpr
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, Math.max(1.5, size), 0, Math.PI * 2)
@@ -200,7 +215,11 @@ export function Monad3DScene() {
         const proj = project(part)
         const alpha = Math.max(0.2, Math.min(0.9, (proj.scale - 0.4) * 1.8))
 
-        ctx.fillStyle = part.hue === 255 ? `rgba(168, 120, 255, ${alpha})` : `rgba(0, 245, 212, ${alpha})`
+        if (isLight) {
+          ctx.fillStyle = part.hue === 255 ? `rgba(91, 62, 255, ${alpha})` : `rgba(2, 132, 199, ${alpha})`
+        } else {
+          ctx.fillStyle = part.hue === 255 ? `rgba(168, 120, 255, ${alpha})` : `rgba(0, 245, 212, ${alpha})`
+        }
         ctx.beginPath()
         ctx.arc(proj.x, proj.y, part.size * proj.scale * dpr, 0, Math.PI * 2)
         ctx.fill()

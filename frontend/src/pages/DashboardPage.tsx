@@ -6,10 +6,13 @@ import { LiveToast } from '../components/LiveToast'
 import { Monad3DScene } from '../components/Monad3DScene'
 import { OfflineSimulationBanner } from '../components/OfflineSimulationBanner'
 import { TransactionSearch } from '../components/TransactionSearch'
+import { VulnerabilityExplainer } from '../components/VulnerabilityExplainer'
 import { useLiveEvents } from '../hooks/useLiveEvents'
+import { useTheme } from '../hooks/useTheme'
 import { useTransactionAnalysis } from '../hooks/useTransactionAnalysis'
 
 export function DashboardPage() {
+  const { theme, toggleTheme } = useTheme()
   const analysis = useTransactionAnalysis()
   const liveEvents = useLiveEvents({
     onNewFinding: analysis.prependFinding,
@@ -17,7 +20,7 @@ export function DashboardPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader theme={theme} onToggleTheme={toggleTheme} />
 
       <OfflineSimulationBanner
         isSimulationActive={analysis.isSimulationActive}
@@ -38,15 +41,15 @@ export function DashboardPage() {
             <div className="hero-copy">
               <div className="eyebrow">
                 <span className="eyebrow-dot" />
-                <span>On-chain transfer intelligence · Monad Testnet</span>
+                <span>🛡️ Monad Testnet Security · Chain ID 10143</span>
               </div>
               <h1>
-                Events can lie.<br />
-                <span className="hero-gradient-text">Evidence doesn't.</span>
+                Did tokens actually move,<br />
+                <span className="hero-gradient-text">or was it just a fake event?</span>
               </h1>
               <p className="hero-description">
-                GhostGuard reconciles Monad Testnet execution receipts, log emitters, and token contracts to expose
-                spoofed ERC-20 `Transfer` events in 90 seconds.
+                On EVM blockchains, any contract can emit an ERC-20 `Transfer` log without holding or transferring tokens.
+                GhostGuard inspects the physical emitter contract on Monad Testnet to expose spoofed transfers in seconds.
               </p>
 
               <TransactionSearch
@@ -55,10 +58,10 @@ export function DashboardPage() {
                 currentHash={analysis.currentHash}
               />
 
-              <div className="hero-proof" aria-label="Product guarantees">
-                <span className="proof-tag">Receipt checked</span>
-                <span className="proof-tag">Emitter verified</span>
-                <span className="proof-tag">Zero invented verdicts</span>
+              <div className="hero-proof" aria-label="Security verification guarantees">
+                <span className="proof-tag">✓ Physical log emitter verified</span>
+                <span className="proof-tag">✓ Receipt status audited</span>
+                <span className="proof-tag">✓ Zero heuristic hallucinations</span>
               </div>
             </div>
 
@@ -67,6 +70,9 @@ export function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* 30-Second Explainer for Hackathon Judges */}
+        <VulnerabilityExplainer />
 
         <section className="dashboard" aria-label="GhostGuard dashboard">
           <div className="dashboard-grid">
