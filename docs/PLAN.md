@@ -45,7 +45,7 @@ Kritik yol: **B1 + B2 → B3 → B4 → F2 final doğrulama → F3 → demo prov
 - Offline fallback kullanılırsa yalnızca versioned/gerçek transaction response fixture'ı ve açık **Recorded demo** etiketi kullan; canlı sonuç gibi gösterme.
 - **Kabul:** Local backend fixture testinde success/reverted/not-found/RPC-down durumları UI'ı çökertmez.
 
-### F3 — Public frontend ve responsive doğrulama (P0, `TODO`)
+### F3 — Public frontend ve responsive doğrulama (P0, `DONE`)
 
 - Vercel/Cloudflare Pages production build.
 - 375 px ve 500 px kontrolleri.
@@ -129,5 +129,5 @@ Tamamlanan ilk dilim:
 | Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
 | Quick Demo + final API UI | Fahad | B2/B3 | DONE | Gerçek hashler + live/recorded ayrımı |
 | Public backend | Salik | B2/B3 | DONE | Free Render service live; health + iki gerçek analyze doğrulandı |
-| Public frontend | Fahad | B4 | TODO | HTTPS UI |
+| Public frontend | Fahad | B4 | DONE | Unified Render HTTPS UI + same-origin API/WS doğrulandı |
 | 90 saniyelik demo | Ortak | Tüm P0 | TODO | İki tx doğru ayrılır |

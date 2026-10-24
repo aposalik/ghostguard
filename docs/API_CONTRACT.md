@@ -23,7 +23,7 @@ Kaynak TypeScript tipleri: `shared/types/index.ts`. Bu belge ve tipler ortak sah
 
 `chainId: 0` sadece degraded/örnek durumudur; gerçek chain ID RPC'den okunur. Sağlıklı cevap HTTP `200`, RPC'ye erişilemeyen degraded cevap aynı şemayla HTTP `503` döner.
 
-Hosting liveness kontrolü RPC'den bağımsız `GET /health/live` üzerinden `{ "status": "ok" }` döner. `GET /` servis adını ve kullanılabilir endpoint yollarını listeler.
+Hosting liveness kontrolü RPC'den bağımsız `GET /health/live` üzerinden `{ "status": "ok" }` döner. Unified deployment'ta `GET /` React dashboard'u, `GET /api` servis adını ve kullanılabilir endpoint yollarını döndürür. Frontend build mevcut değilse backend-only çalıştırmada `GET /` de servis bilgisini döndürebilir.
 
 ## `POST /api/v1/transactions/analyze`
 
