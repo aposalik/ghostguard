@@ -2,9 +2,9 @@
 
 **Tarih:** 2026-10-24
 
-**Aktif entegrasyon branch'i:** `feature/live-findings`
+**Entegrasyon merge commit'i:** `893e01f` (`main`, PR #9)
 
-**Branch tabanı:** `398851c` (`origin/main`)
+**Render deploy:** `dep-dbe9m8vavr4c73a655a0` (`live`)
 
 **Sahiplik:** Fahad frontend; Salik backend/contracts
 
@@ -75,7 +75,8 @@
 - RPC'den bağımsız `GET /health/live` endpoint'i hosting liveness probe'u için eklendi.
 - Render service `https://ghostguard-backend-kmrj.onrender.com` üzerinde live. Public `/health/live` ve `/health` başarılı; chain ID `10143`.
 - Gerçek token işlemi public API'de `VERIFIED_DEMO_TRANSFER`, event-only işlemi `SUSPICIOUS_EVENT` verdi. Watcher iki bulguyu da startup backfill sırasında kaydetti.
-- Deployed sürümün root URL'si yeni entegrasyon deploy edilene kadar 404 döner; `/health/live`, `/health` ve analyze endpoint'leri çalışır.
+- Render servisi artık `main` branch'inden deploy olur ve health check olarak `/health/live` kullanır.
+- Public `GET /` servis bilgisini, `GET /api/v1/findings` gerçek iki persisted finding'i döndürdü; allowed-origin WebSocket handshake başarılı oldu.
 
 ## Doğrulanan komutlar
 
@@ -112,13 +113,12 @@ Final root `npm run check` geçti: frontend 16 test + backend 38 test, iki works
 
 - Analyzer hem fixture/fake RPC hem gerçek Monad RPC üzerindeki iki seed transaction ile doğrulandı.
 - `TOKEN_STATE_SUPPORTS_CLAIM` bilinçli olarak `UNKNOWN`; balance-delta kanıtı henüz uygulanmadı.
-- Frontend ve backend endpoint şeması kod düzeyinde entegre; public backend'in yeni commit'e deploy edilmesi ve public frontend URL'si bekleniyor.
+- Frontend ve backend endpoint şeması kod düzeyinde entegre; public HTTP/WebSocket backend doğrulandı, public frontend URL'si bekleniyor.
 
 ## Henüz yok / blocker
 
 1. Public frontend URL yok.
 2. Public frontend origin'i Render `CORS_ORIGINS` listesine henüz eklenmedi.
-3. Findings/WebSocket entegrasyon commit'i henüz public Render servisine deploy edilmedi.
 
 ## Git/TLS notu
 
@@ -126,7 +126,5 @@ Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapı
 
 ## Hemen sonraki iş
 
-- Public frontend URL oluşunca Render `CORS_ORIGINS` değerine ekle.
-- Entegrasyon branch'ini merge edip Render servisini `main` branch'inden deploy et.
 - Public frontend'i deploy et ve kesin origin'i Render `CORS_ORIGINS` değerine ekle.
 - Public HTTP findings, WebSocket delivery ve dashboard akışını uçtan uca doğrula.
