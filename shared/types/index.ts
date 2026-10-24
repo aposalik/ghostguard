@@ -73,6 +73,42 @@ export interface HealthResponse {
   latestIndexedBlock: string | null
 }
 
+export type AgentState = 'disabled' | 'starting' | 'running' | 'stopped' | 'error' | 'budget_exhausted'
+
+export interface ProducerAgentStatus {
+  enabled: boolean
+  state: AgentState
+  ratePerSecond: number
+  maxTransactions: number
+  suspiciousEvery: number
+  submitted: number
+  normalSubmitted: number
+  suspiciousSubmitted: number
+  failed: number
+  lastTransactionHash: TransactionHash | null
+  lastActivityAt: string | null
+  lastError: string | null
+}
+
+export interface DetectorAgentStatus {
+  enabled: boolean
+  state: AgentState
+  emailNotificationsEnabled: boolean
+  monitoredWalletCount: number
+  pollIntervalMs: number
+  cyclesCompleted: number
+  logsObserved: number
+  findingsStored: number
+  alertsDelivered: number
+  lastActivityAt: string | null
+  lastError: string | null
+}
+
+export interface AgentStatusResponse {
+  producer: ProducerAgentStatus
+  detector: DetectorAgentStatus
+}
+
 export interface ApiErrorResponse {
   error: {
     code:

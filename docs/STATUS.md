@@ -138,3 +138,15 @@ Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapı
 
 - Resend API key'i rotate et ve unified service değerini yeni key ile güncelle.
 - 90 saniyelik demo provası ve backup screenshot/video hazırla.
+
+## İki ajanlı gerçek işlem testi — yerel implementasyon
+
+- `feature/transaction-agents` branch'inde capped gerçek transaction producer eklendi.
+- Producer `DemoToken.transfer` yollarını ve her N işlemde bir `DemoEventOnly.emitTransfer` yolunu kullanır; kayıtlı fixture üretmez.
+- Producer default kapalı, 10 tx/s hard cap ve zorunlu finite işlem bütçesiyle korunur.
+- Mevcut `TransferWatcher`, Detector & Notifier ajanı olarak runtime sayaçları ve email-enabled durumunu raporlar.
+- `GET /api/v1/agents/status` iki ajanı credential sızdırmadan sunar.
+- Dashboard demo presetleri, recorded fallback, offline simulation banner'ı ve sahte live-event butonları kaldırıldı; history yalnızca HTTP/WS backend verisinden gelir.
+- Local unified build port 3100'da `/`, `/health/live` ve `/api/v1/agents/status` ile smoke-test edildi; producer bilinçli olarak disabled tutuldu ve zincir işlemi gönderilmedi.
+- Final `npm run check`: frontend 16 test, backend 45 test; lint, strict typecheck ve iki production build geçti.
+- Public aktivasyon için `ghostguard-deployer` private key'inin Render secret olarak kullanıcı tarafından girilmesi gerekir; key chat/repo/log'a konmamalıdır. Aynı signer mevcut `DemoEventOnly` owner'ıdır.

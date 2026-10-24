@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type {
+  AgentStatusResponse,
   AnalyzeTransactionRequest,
   AnalyzeTransactionResponse,
   FindingsPage,
@@ -62,6 +63,44 @@ describe('GhostGuard API', () => {
 
     expect(response.statusCode).toBe(200)
     expect(response.json()).toEqual({ status: 'ok' })
+  })
+
+  it('reports both transaction agents without exposing signer credentials', async () => {
+    const agentStatus: AgentStatusResponse = {
+      producer: {
+        enabled: true,
+        state: 'running',
+        ratePerSecond: 2,
+        maxTransactions: 100,
+        suspiciousEvery: 10,
+        submitted: 4,
+        normalSubmitted: 4,
+        suspiciousSubmitted: 0,
+        failed: 0,
+        lastTransactionHash: TX_HASH,
+        lastActivityAt: '2026-10-24T13:10:00.000Z',
+        lastError: null,
+      },
+      detector: {
+        enabled: true,
+        state: 'running',
+        emailNotificationsEnabled: true,
+        monitoredWalletCount: 2,
+        pollIntervalMs: 3000,
+        cyclesCompleted: 5,
+        logsObserved: 4,
+        findingsStored: 4,
+        alertsDelivered: 0,
+        lastActivityAt: '2026-10-24T13:10:00.000Z',
+        lastError: null,
+      },
+    }
+    const app = await createApp(new FakeService(), { agentStatus: () => agentStatus })
+    const response = await app.inject({ method: 'GET', url: '/api/v1/agents/status' })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toEqual(agentStatus)
+    expect(response.body).not.toContain('privateKey')
   })
 
   it('reports healthy RPC state', async () => {
@@ -337,6 +376,7 @@ interface CreateAppOptions {
   findings?: Pick<FindingStore, 'listFindings'>
   events?: FindingEventSource
   frontendDirectory?: string
+  agentStatus?: () => AgentStatusResponse
 }
 
 async function createApp(service: AnalysisService, options: CreateAppOptions = {}): Promise<FastifyInstance> {
@@ -345,6 +385,7 @@ async function createApp(service: AnalysisService, options: CreateAppOptions = {
     findings: options.findings,
     events: options.events,
     frontendDirectory: options.frontendDirectory,
+    agentStatus: options.agentStatus,
     corsOrigins: ['http://localhost:5173'],
   })
   apps.push(app)

@@ -102,6 +102,44 @@ Sunucudan istemciye mesaj:
 
 Endpoint watcher'ın SQLite'a yeni kaydettiği bulguları yayınlar. Frontend reconnect/backoff uygular; HTTP endpoint bağlantı kesintilerinde kurtarma ve geçmiş kaynağıdır. Browser `Origin` değeri HTTP CORS allowlist'iyle aynı listeden doğrulanır.
 
+## `GET /api/v1/agents/status`
+
+İki otomasyon ajanının yalnızca operasyonel durumunu döndürür. Signer private key, RPC credential veya email credential hiçbir zaman bu cevaba eklenmez.
+
+```json
+{
+  "producer": {
+    "enabled": false,
+    "state": "disabled",
+    "ratePerSecond": 0,
+    "maxTransactions": 0,
+    "suspiciousEvery": 0,
+    "submitted": 0,
+    "normalSubmitted": 0,
+    "suspiciousSubmitted": 0,
+    "failed": 0,
+    "lastTransactionHash": null,
+    "lastActivityAt": null,
+    "lastError": null
+  },
+  "detector": {
+    "enabled": true,
+    "state": "running",
+    "emailNotificationsEnabled": true,
+    "monitoredWalletCount": 2,
+    "pollIntervalMs": 3000,
+    "cyclesCompleted": 1,
+    "logsObserved": 2,
+    "findingsStored": 2,
+    "alertsDelivered": 1,
+    "lastActivityAt": "2026-10-24T12:00:00.000Z",
+    "lastError": null
+  }
+}
+```
+
+`state`: `disabled`, `starting`, `running`, `stopped`, `error` veya `budget_exhausted`. Sayaçlar process restart'ında sıfırlanabilir; kalıcı finding/checkpoint verisi SQLite'tadır.
+
 ## Hata şekli
 
 HTTP durumları: `400` geçersiz JSON/body/hash/address, `404` receipt bulunamayan işlem, `503` RPC erişim/sağlık sorunu, `500` beklenmeyen hata. Hata kodları: `INVALID_REQUEST`, `INVALID_TRANSACTION_HASH`, `TRANSACTION_NOT_FOUND`, `RPC_UNAVAILABLE`, `INTERNAL_ERROR`.

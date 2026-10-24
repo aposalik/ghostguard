@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { SCENARIO_A_LEGITIMATE, SCENARIO_B_SPOOFED } from '../data/demoScenarios'
 import {
   analyzeTransaction,
   checkBackendHealth,
+  fetchAgentStatus,
   fetchRecentFindings,
   getEventsWsUrl,
   isTransactionHash,
@@ -131,7 +131,7 @@ describe('analyzeTransaction - error diagnostics & status codes', () => {
   })
 })
 
-describe('analyzeTransaction - valid responses & offline demo simulation', () => {
+describe('analyzeTransaction - real backend responses only', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('parses valid backend AnalysisResponse correctly when online', async () => {
@@ -176,20 +176,12 @@ describe('analyzeTransaction - valid responses & offline demo simulation', () =>
     expect(result.findings[0]?.classification).toBe('VERIFIED_DEMO_TRANSFER')
   })
 
-  it('falls back to predetermined fixture for Scenario A (Verified) when offline', async () => {
+  it('does not invent a verified result when the backend is offline', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')))
 
-    const result = await analyzeTransaction({ transactionHash: SCENARIO_A_LEGITIMATE.transactionHash })
-    expect(result.findings[0]?.classification).toBe('VERIFIED_DEMO_TRANSFER')
-    expect(result.findings[0]?.actualEmitterAddress).toBe(SCENARIO_A_LEGITIMATE.response.findings[0]?.actualEmitterAddress)
-  })
-
-  it('falls back to predetermined fixture for Scenario B (Spoofed Decoy) when offline', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')))
-
-    const result = await analyzeTransaction({ transactionHash: SCENARIO_B_SPOOFED.transactionHash })
-    expect(result.findings[0]?.classification).toBe('SUSPICIOUS_EVENT')
-    expect(result.findings[0]?.explanation).toContain('event-only demo contract')
+    await expect(analyzeTransaction({ transactionHash: `0x${'22'.repeat(32)}` })).rejects.toEqual(
+      expect.objectContaining({ code: 'NETWORK_DISCONNECTED' }),
+    )
   })
 })
 
@@ -239,7 +231,20 @@ describe('fetchRecentFindings', () => {
 
   it('fetches recent findings page successfully', async () => {
     const mockFindingsPage = {
-      items: [SCENARIO_A_LEGITIMATE.response.findings[0]],
+      items: [{
+        id: `10143:0x${'11'.repeat(32)}:0`,
+        chainId: 10143,
+        transactionHash: `0x${'11'.repeat(32)}`,
+        logIndex: 0,
+        blockNumber: '123456',
+        classification: 'VERIFIED_DEMO_TRANSFER',
+        actualEmitterAddress: `0x${'aa'.repeat(20)}`,
+        expectedTokenAddress: `0x${'aa'.repeat(20)}`,
+        claimedTransfer: null,
+        checks: [],
+        explanation: 'Live finding.',
+        analyzedAt: '2026-10-24T12:00:00.000Z',
+      }],
       nextCursor: null,
       totalCount: 1,
     }
@@ -283,5 +288,24 @@ describe('fetchRecentFindings', () => {
         status: 0,
       }),
     )
+  })
+})
+
+describe('fetchAgentStatus', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('fetches the live producer and detector status', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        producer: { enabled: false, state: 'disabled', submitted: 0 },
+        detector: { enabled: true, state: 'running', findingsStored: 2 },
+      }),
+    }))
+
+    const status = await fetchAgentStatus()
+    expect(status.producer.state).toBe('disabled')
+    expect(status.detector.state).toBe('running')
   })
 })

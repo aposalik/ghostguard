@@ -1,4 +1,5 @@
 import type {
+  AgentStatusResponse,
   AnalyzeTransactionRequest,
   AnalyzeTransactionResponse,
   ApiErrorResponse,
@@ -7,7 +8,6 @@ import type {
   SecurityFinding,
   TransactionHash,
 } from '@ghostguard/shared'
-import { getDemoPreset } from '../data/demoScenarios'
 
 export type AnalysisRequest = AnalyzeTransactionRequest
 export type AnalysisResponse = AnalyzeTransactionResponse
@@ -94,13 +94,8 @@ function mapHttpError(status: number, serverMessage?: string, serverCode?: strin
   }
 }
 
-export interface AnalyzeOptions {
-  forceSimulation?: boolean
-}
-
 export async function analyzeTransaction(
   request: AnalyzeTransactionRequest,
-  options: AnalyzeOptions = {},
 ): Promise<AnalyzeTransactionResponse> {
   const trimmedHash = request.transactionHash.trim()
 
@@ -112,13 +107,6 @@ export async function analyzeTransaction(
       'INVALID_TRANSACTION_HASH',
       'The entered hash does not conform to the 32-byte hex standard required by Monad RPC.',
     )
-  }
-
-  const preset = getDemoPreset(trimmedHash)
-
-  // If simulation is forced explicitly by the caller and a preset exists, return immediately
-  if (options.forceSimulation && preset) {
-    return preset
   }
 
   let response: Response
@@ -136,10 +124,6 @@ export async function analyzeTransaction(
       }),
     })
   } catch {
-    // Resilient offline fallback for demo transactions when backend is unreachable
-    if (preset) {
-      return preset
-    }
     throw new ApiRequestError(
       'The GhostGuard backend is not reachable. Network disconnected or server offline.',
       0,
@@ -149,11 +133,6 @@ export async function analyzeTransaction(
   }
 
   if (!response.ok) {
-    // If backend returns an error (e.g. 502/503 RPC issue) but this is a demo preset, fallback safely
-    if (preset && (response.status >= 500 || response.status === 404)) {
-      return preset
-    }
-
     const payload = await readError(response)
     const err = mapHttpError(response.status, payload?.error?.message, payload?.error?.code)
     throw new ApiRequestError(err.message, response.status, err.code)
@@ -167,6 +146,22 @@ export async function analyzeTransaction(
       500,
       'INTERNAL_ERROR',
     )
+  }
+}
+
+export async function fetchAgentStatus(): Promise<AgentStatusResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/agents/status`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
+    if (!response.ok) {
+      throw new ApiRequestError(`Failed to fetch agent status with HTTP ${response.status}`, response.status)
+    }
+    return (await response.json()) as AgentStatusResponse
+  } catch (cause) {
+    if (cause instanceof ApiRequestError) throw cause
+    throw new ApiRequestError('The GhostGuard agents are not reachable.', 0, 'NETWORK_DISCONNECTED')
   }
 }
 

@@ -116,6 +116,15 @@ Tamamlanan ilk dilim:
 - `GET /api/v1/findings` opaque cursor pagination. **DONE**
 - `WS /api/v1/events` yeni finding delivery ve CORS-origin kontrolü. **DONE**
 
+### B6 — Gerçek işlem üretici ve iki ajan görünürlüğü (P1, `IN PROGRESS`)
+
+- Capped `TransactionProducer`, gerçek `DemoToken.transfer` ve periyodik `DemoEventOnly.emitTransfer` çağrılarını imzalar. **DONE (local code/tests)**
+- Public-chain güvenlik sınırı: en fazla 10 tx/s ve process başına zorunlu 1–10000 işlem bütçesi. **DONE**
+- Producer varsayılan kapalıdır; private key yalnızca host secret olarak verilir. **DONE**
+- Detector ve producer durumları `GET /api/v1/agents/status` üzerinden yayınlanır. **DONE (local)**
+- Frontend recorded fallback, preset ve client-side fake event tetiklerini kaldırır; yalnızca live API/WS verisi gösterir. **DONE (local)**
+- Gerçek producer aktivasyonu, owner signer secret'i, kesin rate/bütçe ve deploy onayı bekler. **BLOCKED / user input**
+
 ---
 
 ## P0 durum matrisi

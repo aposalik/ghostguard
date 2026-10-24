@@ -43,6 +43,24 @@ export function useLiveEvents({
     onNewFindingRef.current = onNewFinding
   }, [onNewFinding])
 
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+
+    void fetchRecentFindings(20).then((page) => {
+      if (cancelled) return
+      for (const finding of [...page.items].reverse()) {
+        onNewFindingRef.current?.(finding)
+      }
+    }).catch(() => {
+      // WebSocket retry and HTTP polling handle temporary backend outages.
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [enabled])
+
   const dismissNotification = useCallback(() => {
     setNotification(null)
   }, [])
@@ -204,19 +222,10 @@ export function useLiveEvents({
     }
   }, [enabled, stopHttpPolling])
 
-  // Allow manual event simulation for judge live demos
-  const simulateFinding = useCallback(
-    (finding: SecurityFinding) => {
-      handleIncomingFinding(finding)
-    },
-    [handleIncomingFinding],
-  )
-
   return {
     status,
     notification,
     dismissNotification,
-    simulateFinding,
     reconnect: connectWs,
   }
 }

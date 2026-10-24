@@ -123,6 +123,16 @@ npm run check
 2. **Ortak:** 90 saniyelik demo provası ve backup ekran kaydı hazırla.
 3. **Operasyon:** Kullanıcı isterse eski ayrı Render servislerini kaldır.
 
+## Aktif transaction-agent branch'i
+
+- Branch: `feature/transaction-agents`.
+- Agent 1: capped real-chain producer; normal transfer ve periodic event-only çağrı gönderir.
+- Agent 2: mevcut restart-safe watcher/detector; classify, persist, WebSocket publish ve email delivery yapar.
+- Dashboard artık hiçbir recorded fixture/preset/client-side fake event göstermiyor ve iki ajanın live status'unu `/api/v1/agents/status` üzerinden gösteriyor.
+- `npm run check` geçti: frontend 16, backend 45 test.
+- Henüz public deploy veya yeni zincir işlemi yapılmadı. Aktivasyon için kullanıcı kesin `PRODUCER_TPS`, `PRODUCER_MAX_TRANSACTIONS` bütçesini onaylamalı ve mevcut DemoEventOnly owner/deployer private key'ini doğrudan Render secret olarak girmelidir.
+- Resend key rotasyon blocker'ı devam eder.
+
 ## Resume protokolü
 
 `AGENTS.md` → `docs/PROJECT_CONTEXT.md` → bu dosya → `docs/STATUS.md` → `docs/PLAN.md` → `docs/API_CONTRACT.md` okuyun. Sonra:

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AnalyzeTransactionResponse, SecurityFinding, TransactionHash } from '@ghostguard/shared'
-import { getDemoPreset, INITIAL_MONITOR_FINDINGS } from '../data/demoScenarios'
 import { analyzeTransaction, ApiRequestError, checkBackendHealth } from '../services/api'
 
 type AnalysisState = 'idle' | 'loading' | 'success' | 'error'
@@ -17,10 +16,9 @@ export function useTransactionAnalysis() {
   const [data, setData] = useState<AnalyzeTransactionResponse | null>(null)
   const [errorInfo, setErrorInfo] = useState<AnalysisErrorInfo | null>(null)
   const [currentHash, setCurrentHash] = useState<TransactionHash | null>(null)
-  const [history, setHistory] = useState<SecurityFinding[]>(INITIAL_MONITOR_FINDINGS)
+  const [history, setHistory] = useState<SecurityFinding[]>([])
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null)
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
-  const [isSimulationActive, setIsSimulationActive] = useState<boolean>(false)
 
   // Probe backend health safely on mount
   useEffect(() => {
@@ -65,18 +63,9 @@ export function useTransactionAnalysis() {
       setCurrentHash(transactionHash)
 
       try {
-        const response = await analyzeTransaction(
-          { transactionHash },
-          { forceSimulation: isSimulationActive },
-        )
+        const response = await analyzeTransaction({ transactionHash })
         setData(response)
         setState('success')
-
-        // If this was fulfilled by an offline demo preset fixture, ensure simulation active flag is visible
-        const preset = getDemoPreset(transactionHash)
-        if (preset && isBackendOnline === false) {
-          setIsSimulationActive(true)
-        }
 
         if (response.findings.length > 0) {
           setSelectedFindingId(response.findings[0]?.id ?? null)
@@ -106,7 +95,7 @@ export function useTransactionAnalysis() {
         setState('error')
       }
     },
-    [isSimulationActive, isBackendOnline],
+    [],
   )
 
   const retry = useCallback(async () => {
@@ -133,10 +122,6 @@ export function useTransactionAnalysis() {
     setErrorInfo(null)
   }, [])
 
-  const toggleSimulationMode = useCallback(() => {
-    setIsSimulationActive((prev) => !prev)
-  }, [])
-
   const prependFinding = useCallback((finding: SecurityFinding) => {
     setHistory((prev) => {
       const filtered = prev.filter((item) => item.id !== finding.id)
@@ -153,12 +138,10 @@ export function useTransactionAnalysis() {
     history,
     selectedFindingId,
     isBackendOnline,
-    isSimulationActive,
     analyze,
     retry,
     selectFinding,
     prependFinding,
-    toggleSimulationMode,
     probeHealth,
   }
 }
