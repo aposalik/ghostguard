@@ -36,17 +36,22 @@ Durumlar: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`. `DONE` yalnızca doğrulama 
 
 ## Bağımsız ilk işler
 
-### Developer A
+### B4 — Gerçek RPC doğrulaması ve public backend (P0, `IN PROGRESS`)
 
-1. Dashboard temelini doğrula ve erişilebilirlik/telefon görünümünü kontrol et.
-2. Backend response'u hazır olduğunda service katmanını gerçek endpoint'e bağla.
-3. Public frontend deployment ve 90 saniyelik sunum akışını hazırla.
+- B2'yi B3'ün gerçek adres/hash'leriyle integration test et.
+- Render/Railway/Fly.io benzeri long-running hostta HTTPS backend.
+- Fahad'ın kesin frontend origin'ini CORS allowlist'e ekle.
+- Render Blueprint ücretsiz web service ve RPC-independent `/health/live` için hazır; ücretsiz planda SQLite verisi ephemeral ve watcher uyku sırasında durur.
+- **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır.
 
 ### Developer B
 
-1. Foundry kurulumunu doğrula; iki sözleşmeyi test-first geliştir.
-2. Analyzer'ı fixture/yerel receipt testleriyle kur; emitter karşılaştırmasını tamamla.
-3. Monad Testnet deployment ve backend health/analyze endpoint'ini yayımla.
+- SQLite findings + checkpoint. **DONE**
+- Idempotent `chainId:txHash:logIndex` kayıtları. **DONE**
+- Finalized-block polling, bounded range backfill ve restart recovery. **DONE**
+- Monitored wallet için indexed `from`/`to` topic taraması. **DONE**
+- `SUSPICIOUS_EVENT`/`NEEDS_REVIEW` email transport, template ve retry queue. **DONE; live Resend API acceptance doğrulandı**
+- `GET /api/v1/findings` ve `WS /api/v1/events`.
 
 ## Organizer belirsizlikleri
 
@@ -54,4 +59,14 @@ Durumlar: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`. `DONE` yalnızca doğrulama 
 - Submission saati, gerekli chain/deployment kriterleri ve judging formatı.
 - Public repo lisans beklentisi.
 
-Bu maddeler organizer kaynağından doğrulanmadan varsayım yapılmaz.
+| İş | Sahip | Bağımlılık | Durum | Kanıt / kabul |
+|---|---|---|---|---|
+| Monorepo ve ortak tipler | Ortak | Yok | DONE | Root check geçti |
+| Dashboard foundation | Fahad | Ortak tipler | DONE | Frontend lint/typecheck/test/build |
+| Demo sözleşmeleri | Salik | Foundry | DONE | `forge fmt --check`; 3 Foundry testi geçti |
+| Fixture analyzer/API | Salik | Ortak tipler | DONE | 21 test + iki gerçek tx API doğrulaması |
+| Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
+| Quick Demo + final API UI | Fahad | B2/B3 | IN PROGRESS | Gerçek hashlerle UI |
+| Public backend | Salik | B2/B3 | IN PROGRESS | Render config hazır; external service creation bekliyor |
+| Public frontend | Fahad | B4 | TODO | HTTPS UI |
+| 90 saniyelik demo | Ortak | Tüm P0 | TODO | İki tx doğru ayrılır |

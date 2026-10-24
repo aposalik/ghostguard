@@ -42,7 +42,46 @@ Frontend UI/UX ve 90 saniyelik hakem demo akışı tamamlandı:
 - `frontend/src/services/api.ts`: frontend HTTP adaptörü
 - `docs/PLAN.md`: sahiplik ve öncelikler
 
-## Doğrulanmış komutlar
+## Aktif deployment dilimi
+
+- Resmî Monad Testnet endpoint'i `https://testnet-rpc.monad.xyz`, chain ID `10143`; live read-only probe doğrulandı.
+- `DeployAndSeed.s.sol` local ve gerçek RPC üzerinde broadcast edilmeden başarıyla simüle edildi.
+- Simülasyon iki deployment + iki seed çağrısı için 767094 tahmini gas ve yaklaşık 0.154952988 testnet MON üst sınırı verdi.
+- Makinede yalnızca önceki MonVault projesine isimlendirilmiş keystore görüldü; GhostGuard için açık karar olmadan kullanılmadı.
+
+## Tamamlanan testnet doğrulaması
+
+- DemoToken: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`.
+- DemoEventOnly: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
+- Gerçek transfer: `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f` → `VERIFIED_DEMO_TRANSFER`.
+- Event-only: `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4` → `SUSPICIOUS_EVENT`.
+- Dört deployment/seed receipt'i başarılı; gerçek transfer recipient'a `25 GGD` yazdı.
+
+## Aktif P1 watcher/email dilimi
+
+- `TransferWatcher` finalized block range'lerini 100 blokluk parçalarla tarar; monitored addresses hem `from` hem `to` topic'inde aranır.
+- SQLite checkpoint/findings restart sonrası korunur ve canonical event identity ile deduplicate edilir.
+- Email transport Resend-compatible HTTP API kullanır; HTML escape, evidence template ve failed-delivery retry uygulanmıştır.
+- 7 dosyada 30 backend testi geçer; 101 normal + 1 suspicious event, duplicate cycle, provider failure retry ve process restart kapsanır.
+- Real RPC backfill transaction hash girdisi olmadan event-only seed'i otomatik bulup `SUSPICIOUS_EVENT` üretti.
+- Resend test sender üzerinden gerçek API acceptance başarıyla doğrulandı; pending finding `alerted_at` ile tamamlandı. Inbox görünürlüğü kullanıcı teyidi bekler.
+
+## Public backend deployment hazırlığı
+
+- Railway signup kapalı olduğu için Render seçildi.
+- `render.yaml` ücretsiz Node web service, Frankfurt region, ephemeral `/tmp/ghostguard.db`, public config ve dashboard-entered secrets içerir. Ücretsiz host restart/spin-down durumunda SQLite verisi kaybolabilir ve watcher durur.
+- `/health/live` RPC-independent liveness endpoint'i eklendi ve testlidir.
+- Render service/account oluşturma ve public URL doğrulaması henüz yapılmadı.
+
+## Tasarım sınırları
+
+- Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.
+- Trusted config yoksa request adresi comparison context olabilir, verified kararı üretmez.
+- Reverted receipt için findings boş kalır; başarı uydurulmaz.
+- Balance-delta kontrolü henüz yok; ilgili check `UNKNOWN`.
+- Unknown emitter `NEEDS_REVIEW`; fraud etiketi verilmez.
+
+## Çalıştırma
 
 ```bash
 npm install
@@ -56,16 +95,16 @@ Headless Chrome ile desktop ve 500 px responsive screenshot'ları görsel olarak
 
 ## Bilinen sorunlar
 
-- Foundry kurulu değil.
-- Backend ve sözleşme implementasyonu yok.
-- RPC, testnet address/hash ve deployment URL'leri yok.
-- Varsayılan Git HTTPS trust path'i bu hostta hata verdi; TLS kapatılmadan ortam trust bundle'ı kullanıldı.
+## Blocker'lar
+
+- Public backend/frontend URL yok.
+- Findings HTTP/WebSocket delivery uçları henüz yok.
 
 ## Sonraki üç görev
 
-1. **Developer B:** Foundry ile `DemoToken` ve `DemoEventOnly` testlerini yazıp sözleşmeleri implement et.
-2. **Developer B:** Fixture tabanlı analyzer + `POST /api/v1/transactions/analyze` endpoint'ini ortak tiplere göre oluştur.
-3. **Developer A:** Endpoint hazır olduğunda gerçek response entegrasyonunu test et ve public frontend deployment yap.
+1. **Salik:** Public repo URL + `render.yaml` ile Render backend service oluştur; secret env değerlerini dashboard'dan gir.
+2. **Fahad + Salik:** Local/public frontend entegrasyonunu gerçek iki hash'le doğrula.
+3. **P1:** Findings HTTP/WebSocket uçlarını tamamla ve public hostta watcher sürekliliğini doğrula.
 
 ## Resume protokolü
 

@@ -19,6 +19,14 @@ afterEach(async () => {
 })
 
 describe('GhostGuard API', () => {
+  it('provides an RPC-independent liveness endpoint for the hosting platform', async () => {
+    const app = await createApp(new FakeService({ status: 'degraded', chainId: 0, latestIndexedBlock: null }))
+    const response = await app.inject({ method: 'GET', url: '/health/live' })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toEqual({ status: 'ok' })
+  })
+
   it('reports healthy RPC state', async () => {
     const app = await createApp(new FakeService())
     const response = await app.inject({ method: 'GET', url: '/health' })

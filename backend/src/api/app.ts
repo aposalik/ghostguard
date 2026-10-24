@@ -47,6 +47,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     return reply.code(health.status === 'ok' ? 200 : 503).send(health)
   })
 
+  app.get('/health/live', async () => ({ status: 'ok' }))
+
   app.post('/api/v1/transactions/analyze', async (request, reply) => {
     const parsed = parseAnalyzeRequest(request.body)
     if (!parsed.ok) return sendError(reply, 400, parsed.code, parsed.message, request.id)

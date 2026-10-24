@@ -31,14 +31,22 @@
 
 ## Çalışmayan / henüz yok
 
-- Foundry (`forge`, `cast`, `anvil`) bu makinede kurulu değil.
-- Backend, watcher, analyzer, SQLite ve WebSocket implementasyonu yok.
-- Solidity sözleşmeleri ve testleri yok.
-- Monad Testnet deployment adresi veya doğrulanmış işlem hash'i yok.
-- Public Web Deployment yapılandırmaları eklendi (`vercel.json`, `frontend/vercel.json`, `netlify.toml`); Vercel ve Netlify build komutu ve çıktı dizinleri yapılandırıldı.
-- Mobil ve Responsive Düzen Denetimi tamamlandı: 375px (kompakt mobil), 500px (geniş mobil) ve 1440px masaüstü ekranlarında test edildi; taşma olmadan dikey kart istifleme, truncate ve kopyalama butonları (`CopyButton`) doğrulandı.
-- Pre-flight doğrulaması: `npm run lint` (0 error, 0 warning, 17 dosya), `npm run typecheck` (0 error), `npm run test` (12 test passed), `npm run build` (üretim derlemesi başarılı).
-- Çalışma `feature/frontend-dashboard` branch'inde commitlendi (`61e2437`).
+- Finalized head'e kadar bounded HTTP `eth_getLogs` polling uygular; monitored wallet'ları hem indexed `from` hem `to` topic'inde tarar.
+- SQLite `watcher_state` ve `findings` tabloları restart recovery sağlar.
+- Canonical `chainId:transactionHash:logIndex` identity ve DB unique constraint tekrar finding/email üretimini engeller.
+- RPC/analyzer hatasında tamamlanmamış range checkpoint edilmez; sonraki cycle yeniden dener.
+- `SUSPICIOUS_EVENT` ve `NEEDS_REVIEW` email queue'suna girer; provider hatasında `alerted_at` boş kalır ve sonraki cycle aynı provider idempotency key'iyle tekrar denenir.
+- Email HTML'i zincir kaynaklı alanları escape eder ve classification/emitter/reason/explorer linki içerir.
+- Gerçek Monad backfill testi transaction hash verilmeden event-only seed'i otomatik buldu.
+- Public RPC `1000` blok sorgusuna HTTP 413 verdiği için varsayılan range `100` blok olarak sınırlandı.
+- Resend test sender ile pending `SUSPICIOUS_EVENT` email'i provider tarafından kabul edildi; SQLite `alerted_at` alanı acceptance sonrası yazıldı. Inbox görünürlüğü kullanıcı tarafından doğrulanmalıdır.
+
+### Public backend hazırlığı
+
+- Railway signup geçici olarak kapalı olduğu için hedef Render web service olarak değiştirildi.
+- Kullanıcının sıfır maliyet tercihi nedeniyle root `render.yaml` ücretsiz planı, ephemeral `/tmp/ghostguard.db` SQLite yolunu ve secret prompt'larını tanımlar; restart/spin-down veriyi silebilir ve watcher'ı durdurabilir.
+- RPC'den bağımsız `GET /health/live` endpoint'i hosting liveness probe'u için eklendi.
+- Root check 31 backend + 3 frontend test ile geçti; actual Render service henüz oluşturulmadı.
 
 ## Doğrulanan komutlar
 
@@ -54,7 +62,9 @@
 
 ## Git/TLS notu
 
-Git HTTPS bağlantısı varsayılan çağrıda yerel issuer hatası verdi. TLS doğrulaması kapatılmadı; mevcut güvenilir bundle ile `GIT_SSL_CAINFO="$SSL_CERT_FILE" git ...` kullanıldığında remote okuması ve clone başarılı oldu. Remote okuması, clone ve push (origin/main, origin/feature/frontend-dashboard) güvenli TLS trust bundle ile başarıyla tamamlandı.
+1. Public backend/frontend URL yok.
+2. Frontend quick-demo hash yapılandırması ve public E2E doğrulaması tamamlanmadı.
+3. `GET /api/v1/findings` ve WebSocket P1 uçları uygulanmadı.
 
 ## Blocker'lar
 
@@ -65,4 +75,7 @@ Git HTTPS bağlantısı varsayılan çağrıda yerel issuer hatası verdi. TLS d
 
 ## Hemen sonraki iş
 
-Developer B'nin Foundry tabanlı iki demo sözleşmesini ve analyzer fixture testlerini bağımsız başlatması; Developer A backend endpoint hazır olduğunda gerçek entegrasyon testi ve public frontend deployment yapar.
+- Public backend'i doğrulanmış adreslerle deploy et ve frontend CORS origin'ini ekle.
+- Frontend quick-demo girişlerini gerçek iki hash ile bağla ve public E2E doğrula.
+- Findings HTTP pagination ve WebSocket delivery uçlarını uygula.
+- Fahad, local backend contract'ına karşı F2 entegrasyonunu bağımsız geliştirebilir.
