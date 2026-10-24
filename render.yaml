@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: ghostguard-backend
+    runtime: node
+    repo: https://github.com/aposalik/ghostguard.git
+    branch: feature/backend-analyzer
+    region: frankfurt
+    plan: 0.5c-512mb
+    numInstances: 1
+    buildCommand: npm ci && npm run build --workspace @ghostguard/backend
+    startCommand: npm start --workspace @ghostguard/backend
+    healthCheckPath: /health/live
+    maxShutdownDelaySeconds: 30
+    disk:
+      name: ghostguard-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 22.23.1
+      - key: HOST
+        value: 0.0.0.0
+      - key: MONAD_RPC_URL
+        value: https://testnet-rpc.monad.xyz
+      - key: TRUSTED_DEMO_TOKEN_ADDRESS
+        value: 0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639
+      - key: DEMO_EVENT_ONLY_ADDRESS
+        value: 0xa7836d1245593d16929a3Eea3Aa34461EF08F474
+      - key: RPC_TIMEOUT_MS
+        value: "10000"
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        value: /var/data/ghostguard.db
+      - key: WATCH_ENABLED
+        value: "true"
+      - key: MONITORED_WALLET_ADDRESSES
+        value: 0x72a319E6ff8A30A8a524C8559DF185164409b9BD,0x07eeAf6BB355fa538eb69Df7A3Fdd6C81E3807fB
+      - key: WATCH_START_BLOCK
+        value: "73787270"
+      - key: WATCH_CONFIRMATIONS
+        value: "5"
+      - key: WATCH_BLOCK_RANGE
+        value: "100"
+      - key: WATCH_POLL_INTERVAL_MS
+        value: "3000"
+      - key: EMAIL_ENABLED
+        value: "true"
+      - key: EMAIL_API_URL
+        value: https://api.resend.com/emails
+      - key: EMAIL_API_KEY
+        sync: false
+      - key: ALERT_EMAIL_FROM
+        sync: false
+      - key: ALERT_EMAIL_TO
+        sync: false
+      - key: MONAD_EXPLORER_URL
+        value: https://testnet.monadscan.com

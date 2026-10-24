@@ -62,6 +62,14 @@
 - Email HTML'i zincir kaynaklı alanları escape eder ve classification/emitter/reason/explorer linki içerir.
 - Gerçek Monad backfill testi transaction hash verilmeden event-only seed'i otomatik buldu.
 - Public RPC `1000` blok sorgusuna HTTP 413 verdiği için varsayılan range `100` blok olarak sınırlandı.
+- Resend test sender ile pending `SUSPICIOUS_EVENT` email'i provider tarafından kabul edildi; SQLite `alerted_at` alanı acceptance sonrası yazıldı. Inbox görünürlüğü kullanıcı tarafından doğrulanmalıdır.
+
+### Public backend hazırlığı
+
+- Railway signup geçici olarak kapalı olduğu için hedef Render web service + persistent disk olarak değiştirildi.
+- Root `render.yaml` monorepo build/start komutlarını, Frankfurt region'ı, tek instance'ı, `/var/data` SQLite volume'unu ve secret prompt'larını tanımlar.
+- RPC'den bağımsız `GET /health/live` endpoint'i hosting liveness probe'u için eklendi.
+- Root check 31 backend + 3 frontend test ile geçti; actual Render service henüz oluşturulmadı.
 
 ## Doğrulanan komutlar
 
@@ -105,7 +113,6 @@ Final root `npm run check` geçti: frontend 3 test + backend 21 test, iki worksp
 1. Public backend/frontend URL yok.
 2. Frontend quick-demo hash yapılandırması ve public E2E doğrulaması tamamlanmadı.
 3. `GET /api/v1/findings` ve WebSocket P1 uçları uygulanmadı.
-4. Email provider credentials/verified sender sağlanmadığı için gerçek inbox delivery testi yapılmadı.
 
 ## Git/TLS notu
 
@@ -115,6 +122,5 @@ Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapı
 
 - Public backend'i doğrulanmış adreslerle deploy et ve frontend CORS origin'ini ekle.
 - Frontend quick-demo girişlerini gerçek iki hash ile bağla ve public E2E doğrula.
-- Email provider credentials/verified sender ile gerçek inbox delivery testi yap.
 - Findings HTTP pagination ve WebSocket delivery uçlarını uygula.
 - Fahad, local backend contract'ına karşı F2 entegrasyonunu bağımsız geliştirebilir.
