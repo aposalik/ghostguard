@@ -1,129 +1,57 @@
-# Uygulama Planı ve Görev Dağılımı
+# Uygulama Planı
 
-## Sahiplik
+Durumlar: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`. `DONE` yalnızca doğrulama kanıtıyla kullanılır.
 
-- **Fahad (@MFahadFaisal):** `frontend/`, UI/UX, API tüketimi, responsive davranış, public frontend ve sunum.
-- **Salik (@aposalik):** `backend/`, `contracts/`, Foundry testleri, RPC/analyzer, testnet ve public backend.
-- **Ortak:** `shared/types/index.ts` ve `docs/API_CONTRACT.md`; kırıcı değişiklik birlikte koordine edilir.
+## P0 — Bugün çalışmalı
 
-Durumlar: `TODO`, `IN PROGRESS`, `BLOCKED`, `DONE`. `DONE` yalnızca komut veya gözlenebilir kanıtla kullanılır.
-
-## Faz kontrolü — önerilen yürütme sırası
-
-Önceki sıra analyzer'ı testnet deployment sonrasına bırakıyordu. Buna gerek yoktur: analyzer ve API fixture/fake RPC ile sözleşmelerden bağımsız geliştirilebilir. Bu nedenle iki paralel hat kullanılır:
-
-```text
-Backend:  B1 Contracts ──► B3 Testnet deploy ──► B4 Real-RPC/public backend
-              ╲                                      ▲
-               └──── B2 Fixture analyzer/API ────────┘
-
-Frontend: F1 Evidence/demo UI ──► F2 API integration ──► F3 Public frontend
-                                                        │
-Common:                   90-second end-to-end demo ◄────┘
-```
-
-Kritik yol: **B1 + B2 → B3 → B4 → F2 final doğrulama → F3 → demo provası.** F1, B1 ve B2 paralel ilerler.
-
----
-
-## Fahad — Frontend
-
-### F1 — Kanıt UI ve Quick Demo Switcher (P0, `IN PROGRESS`)
-
-- Classification rozetleri, emitter/expected address ve explorer linklerini görünür yap.
-- İki Quick Demo butonunu env/config üzerinden gelecek gerçek tx hash'lerine bağlanmaya hazırla.
-- Backend adresleri gelmeden hash veya sonuç uydurma; butonları “awaiting deployment” durumunda tut.
-- **Kabul:** Gerçek iki hash sağlandığında kod değişmeden/yalnızca env ile iki senaryo çalışır.
-
-> Geçmiş analiz listesi ve sürekli live monitor, backend persistence/WebSocket'e bağlı olduğu için P1/F4 kapsamındadır; P0 kabul kriterini bloke etmez.
-
-### F2 — API entegrasyonu ve hata yönetimi (P0, `IN PROGRESS`)
-
-- `GET /health` ve `POST /api/v1/transactions/analyze` entegrasyonu.
-- 400/404/503 hata şekillerini güvenli ve anlaşılır göster.
-- Tekrar dene akışı ve degraded backend durumu.
-- Offline fallback kullanılırsa yalnızca versioned/gerçek transaction response fixture'ı ve açık **Recorded demo** etiketi kullan; canlı sonuç gibi gösterme.
-- **Kabul:** Local backend fixture testinde success/reverted/not-found/RPC-down durumları UI'ı çökertmez.
-
-### F3 — Public frontend ve responsive doğrulama (P0, `TODO`)
-
-- Vercel/Cloudflare Pages production build.
-- 375 px ve 500 px kontrolleri.
-- `npm run check` sıfır hata.
-- **Kabul:** Harici cihazdan HTTPS URL açılır ve public backend'e erişir.
-
-### F4 — Findings feed, WebSocket ve bildirimler (P1, `TODO`)
-
-- `GET /api/v1/findings` ve `WS /api/v1/events`.
-- Reconnect/backoff ve HTTP recovery.
-
----
-
-## Salik — Backend ve Contracts
-
-### B1 — Foundry demo sözleşmeleri (P0, `DONE`)
-
-- `DemoToken.sol`: gerçek ERC-20 balance değişimi.
-- `DemoEventOnly.sol`: kontrollü transfer-shaped event, token state değişimi yok.
-- Unit testlerde balance ve event kanıtlarını ayrı assert et.
-- `DemoToken` gerçek balance değişimi ve ERC-20 `Transfer` event'i üretir.
-- `DemoEventOnly` owner-gated biçimde aynı event şeklini token state olmadan üretir.
-- 3 Foundry testi gerçek balance/event ayrımını ve yetkisiz event reddini doğrular.
-- **Kabul:** `forge fmt --check` ve `forge test` geçer.
-
-### B2 — Fixture tabanlı analyzer ve Fastify API (P0, `DONE`)
-
-Tamamlanan ilk dilim:
-
-- Validated env config ve timeout'lu JSON-RPC client.
-- Receipt status + gerçek `log.address` incelemesi.
-- Transfer topic/from/to/amount decode.
-- Configured DemoToken/EventOnly adreslerine göre deterministik classification.
-- `GET /health`, `POST /api/v1/transactions/analyze`, canonical API errors ve CORS allowlist.
-- 4 test dosyasında 21 unit/API testi.
-
-- Gerçek Monad RPC üzerinde iki seed tx aynı API şemasında doğru ayrıldı.
-- Aynı blok bağlamında token-state/balance kanıtı uygulanana kadar ilgili check `UNKNOWN` kalır; kontrollü demo emitter kanıtı doğrulandı.
-- **Kabul:** Fixture testleri ve iki gerçek seed tx aynı API şemasında doğru ayrılır.
-
-### B3 — Monad Testnet deployment ve seed işlemler (P0, `DONE`)
-
-- B1 sonrası iki sözleşmeyi disposable testnet wallet ile deploy et.
-- Bir gerçek token transferi ve bir event-only işlem üret.
-- Chain ID, contract adresleri, tx hash'leri ve explorer linklerini doğrula.
-- `TRUSTED_DEMO_TOKEN_ADDRESS` ve `DEMO_EVENT_ONLY_ADDRESS` deployment config'e ekle.
-- Resmî RPC/chain bilgisi ve live chain ID doğrulandı; deployment+seed script'i local ve gerçek RPC üzerinde broadcast edilmeden simüle edildi.
-- İki contract deploy edildi; gerçek transfer ve event-only seed transaction'ları RPC ve API üzerinden doğrulandı.
-- **Kabul:** Explorer ve RPC iki işlemi aynı chain'de gösterir.
-
-### B4 — Gerçek RPC doğrulaması ve public backend (P0, `TODO`)
-
-- B2'yi B3'ün gerçek adres/hash'leriyle integration test et.
-- Render/Railway/Fly.io benzeri long-running hostta HTTPS backend.
-- Fahad'ın kesin frontend origin'ini CORS allowlist'e ekle.
-- **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır.
-
-### B5 — Persistence, watcher ve notifications (P1, `IN PROGRESS`)
-
-- SQLite findings + checkpoint. **DONE**
-- Idempotent `chainId:txHash:logIndex` kayıtları. **DONE**
-- Finalized-block polling, bounded range backfill ve restart recovery. **DONE**
-- Monitored wallet için indexed `from`/`to` topic taraması. **DONE**
-- `SUSPICIOUS_EVENT`/`NEEDS_REVIEW` email transport, template ve retry queue. **IMPLEMENTED; live provider credentials bekliyor**
-- `GET /api/v1/findings` ve `WS /api/v1/events`.
-
----
-
-## P0 durum matrisi
-
-| İş | Sahip | Bağımlılık | Durum | Kanıt / kabul |
+| İş | Sahip | Bağımlılık | Durum | Kabul kriteri |
 |---|---|---|---|---|
-| Monorepo ve ortak tipler | Ortak | Yok | DONE | Root check geçti |
-| Dashboard foundation | Fahad | Ortak tipler | DONE | Frontend lint/typecheck/test/build |
-| Demo sözleşmeleri | Salik | Foundry | DONE | `forge fmt --check`; 3 Foundry testi geçti |
-| Fixture analyzer/API | Salik | Ortak tipler | DONE | 21 test + iki gerçek tx API doğrulaması |
-| Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
-| Quick Demo + final API UI | Fahad | B2/B3 | IN PROGRESS | Gerçek hashlerle UI |
-| Public backend | Salik | B2/B3 | TODO | HTTPS health/analyze |
-| Public frontend | Fahad | B4 | TODO | HTTPS UI |
-| 90 saniyelik demo | Ortak | Tüm P0 | TODO | İki tx doğru ayrılır |
+| Repo ve monorepo temeli | Ortak | Yok | DONE | `npm run check` geçti; monorepo/ownership yapısı mevcut |
+| API tipleri ve sözleşmesi | Ortak | Yok | DONE | `shared` tipleri ve `docs/API_CONTRACT.md` eşleşiyor |
+| Dashboard temeli | Developer A | API sözleşmesi | DONE | Hash formu, loading/error/result, unit test ve responsive screenshot doğrulandı |
+| Quick Demo Presets (Scenario A/B) | Developer A | Yok | DONE | 90-saniyelik tek tıkla senaryo geçişi, otomatik analiz ve mock doğrulama |
+| Evidence UI & Badges | Developer A | Shared types | DONE | Monad Explorer doğrudan linkleri, Emitter Mismatch callout kutusu, görsel statü rozetleri |
+| Live Monitor Feed | Developer A | Analyzer/history | DONE | Son işlemler paneli, tıklanarak AnalysisPanel'de kanıt görüntüleme |
+| Monad 3D Tasarım & Marka Dili | Developer A | Monad Brand Kit | DONE | Monad moru/obsidian renkleri, interaktif 3D Canvas prizması, perspektif kart derinliği |
+| DemoToken + unit test | Developer B | Foundry | BLOCKED | Gerçek transfer bakiyeleri ve event assert edilir |
+| DemoEventOnly + unit test | Developer B | Foundry | BLOCKED | Event oluşur, DemoToken bakiyesi değişmez |
+| Receipt/log analyzer | Developer B | Sözleşme adresleri, RPC | TODO | Emitter ve receipt kanıtıyla iki demo ayrılır |
+| Frontend API entegrasyonu | Developer A | Analyzer endpoint | DONE | Fastify backend adaptörü, GET /health, hata tanıları (400/404/502/503), offline simülasyon modu ve 12 testle doğrulandı |
+| Monad Testnet deployment | Developer B | Sözleşmeler, disposable wallet | TODO | Explorer'da iki adres ve demo tx'leri doğrulanır |
+| Public frontend/backend | Developer A | Çalışan build ve env | DONE | Vercel/Netlify konfigürasyonları (vercel.json, netlify.toml), 375px/500px responsive audit, CopyButton ve pre-flight check tamamlandı |
+| 90 saniyelik demo provası | Ortak | Uçtan uca akış | TODO | `docs/DEMO.md` akışı süre içinde iki işlemi ayırır |
+
+## P1 — Zaman kalırsa
+
+| İş | Sahip | Bağımlılık | Durum | Kabul kriteri |
+|---|---|---|---|---|
+| Kalıcı findings DB | Developer B | Analyzer | TODO | Restart sonrası kayıtlar korunur |
+| Live watcher | Developer B | RPC + DB | TODO | Disconnect/reconnect ve missed-event recovery testi |
+| Live feed | Developer A | Findings API/WS | DONE | WebSocket client hook (ws/wss), exponential backoff ve HTTP polling fallback (GET /api/v1/findings), LiveToast bildirim sistemi, LiveMonitor entegrasyonu ve 16 unit test ile doğrulandı |
+| Grounded agent explanation | Developer B | Finding şeması | TODO | Sadece yapılandırılmış kanıttan açıklama |
+
+## P2 — Hackathon sonrası
+
+Çoklu cüzdan izleme, notifications, ek token standartları, SDK, gelişmiş address-poisoning analizi ve tarihsel analytics.
+
+## Bağımsız ilk işler
+
+### Developer A
+
+1. Dashboard temelini doğrula ve erişilebilirlik/telefon görünümünü kontrol et.
+2. Backend response'u hazır olduğunda service katmanını gerçek endpoint'e bağla.
+3. Public frontend deployment ve 90 saniyelik sunum akışını hazırla.
+
+### Developer B
+
+1. Foundry kurulumunu doğrula; iki sözleşmeyi test-first geliştir.
+2. Analyzer'ı fixture/yerel receipt testleriyle kur; emitter karşılaştırmasını tamamla.
+3. Monad Testnet deployment ve backend health/analyze endpoint'ini yayımla.
+
+## Organizer belirsizlikleri
+
+- Kullanılmasına izin verilen scaffolding/dependency sınırları.
+- Submission saati, gerekli chain/deployment kriterleri ve judging formatı.
+- Public repo lisans beklentisi.
+
+Bu maddeler organizer kaynağından doğrulanmadan varsayım yapılmaz.
