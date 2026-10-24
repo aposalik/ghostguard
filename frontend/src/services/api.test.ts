@@ -189,7 +189,7 @@ describe('analyzeTransaction - valid responses & offline demo simulation', () =>
 
     const result = await analyzeTransaction({ transactionHash: SCENARIO_B_SPOOFED.transactionHash })
     expect(result.findings[0]?.classification).toBe('SUSPICIOUS_EVENT')
-    expect(result.findings[0]?.explanation).toContain('NOT the trusted DemoToken contract')
+    expect(result.findings[0]?.explanation).toContain('event-only demo contract')
   })
 })
 

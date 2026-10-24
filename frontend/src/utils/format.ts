@@ -35,9 +35,9 @@ export function formatTimeAgo(isoString: string): string {
 }
 
 export function getExplorerTxUrl(hash: string): string {
-  return `https://testnet.monadexplorer.com/tx/${hash}`
+  return `https://testnet.monadscan.com/tx/${hash}`
 }
 
 export function getExplorerAddressUrl(address: string): string {
-  return `https://testnet.monadexplorer.com/address/${address}`
+  return `https://testnet.monadscan.com/address/${address}`
 }

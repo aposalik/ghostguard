@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import type { TransactionHash } from '@ghostguard/shared'
-import { SCENARIO_A_LEGITIMATE, SCENARIO_B_SPOOFED, SCENARIO_C_REVIEW } from '../data/demoScenarios'
+import { SCENARIO_A_LEGITIMATE, SCENARIO_B_SPOOFED } from '../data/demoScenarios'
 import { isTransactionHash } from '../services/api'
 
 interface TransactionSearchProps {
@@ -119,17 +119,6 @@ export function TransactionSearch({ isLoading, onSubmit, currentHash }: Transact
             <span className="preset-tag tag-hazard">Emitter Mismatch</span>
           </button>
 
-          <button
-            type="button"
-            className={`preset-pill preset-pill-review ${activePreset === 'scenario-c' ? 'is-active' : ''}`}
-            onClick={() => handleSelectPreset('scenario-c', SCENARIO_C_REVIEW.transactionHash)}
-            disabled={isLoading}
-            title={SCENARIO_C_REVIEW.description}
-          >
-            <span className="preset-dot dot-review" />
-            <span className="preset-label">Scenario C: Unknown Contract</span>
-            <span className="preset-tag tag-review">Needs Review</span>
-          </button>
         </div>
       </div>
     </div>
