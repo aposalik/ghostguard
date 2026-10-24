@@ -4,7 +4,7 @@
 
 **Unified deployment merge commit'i:** `08c2059` (`main`, PR #12)
 
-**Render deploy:** `dep-dbe9uu0m7kps73d67drg` (`live`)
+**Render deploy:** `dep-dbea40oae00c73cf5d0g` (`live`)
 
 **Sahiplik:** Fahad frontend; Salik backend/contracts
 
@@ -85,7 +85,8 @@
 - Production frontend aynı-origin HTTP ve WebSocket yollarını kullanır; ayrı frontend/backend CORS bağımlılığı kaldırıldı.
 - Public health chain ID `10143`; iki gerçek finding history'de göründü; gerçek ve event-only transaction'lar doğru sınıflandırıldı.
 - Same-origin public WebSocket handshake başarılı oldu.
-- Yeni serviste email credential transferi ayrıca yetkilendirilmediği için `EMAIL_ENABLED=false`; watcher, analyzer, persistence ve live feed çalışır.
+- Kullanıcının açık onayıyla üç Resend email setting'i unified servise aktarıldı ve `EMAIL_ENABLED=true` yapıldı.
+- Watcher backfill sonrası suspicious finding için `Watcher delivered an email alert` logu doğrulandı.
 
 ## Doğrulanan komutlar
 
@@ -126,8 +127,8 @@ Final root `npm run check` geçti: frontend 16 test + backend 40 test, iki works
 
 ## Henüz yok / blocker
 
-1. Yeni unified serviste Resend email credentials henüz etkin değil.
-2. Önceki ayrı `ghostguard-backend` ve `ghostguard-frontend` servisleri kullanıcı onayı olmadan silinmedi.
+1. Önceki ayrı `ghostguard-backend` ve `ghostguard-frontend` servisleri kullanıcı onayı olmadan silinmedi.
+2. Resend API key güvenlik için rotasyon bekliyor; yeni key sonrası unified service değeri güncellenmeli.
 
 ## Git/TLS notu
 
@@ -135,5 +136,5 @@ Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapı
 
 ## Hemen sonraki iş
 
-- Resend ayarlarını yeni unified servise açık onayla aktar veya Render dashboard'dan elle gir.
+- Resend API key'i rotate et ve unified service değerini yeni key ile güncelle.
 - 90 saniyelik demo provası ve backup screenshot/video hazırla.

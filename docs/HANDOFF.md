@@ -86,8 +86,8 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - PR #12 / merge `08c2059`, Fastify'ın built Vite dashboard'u ve API'yi aynı process/origin üzerinden sunmasını sağlar.
 - Yeni project `ghostguard-unified`, Production environment içinde tek free web service içerir.
 - Public URL: `https://ghostguard-unified.onrender.com`; API bilgisi `/api`, health `/health`, endpoints `/api/v1/*` altındadır.
-- Deploy `dep-dbe9uu0m7kps73d67drg` live; dashboard HTML/assets, health, findings, iki gerçek analyze sonucu ve same-origin WebSocket doğrulandı.
-- Yeni serviste email credential transferi için ayrıca açık onay verilmedi; güvenli başlangıç olarak `EMAIL_ENABLED=false` kullanıldı.
+- Email-enabled deploy `dep-dbea40oae00c73cf5d0g` live; dashboard HTML/assets, health, findings, iki gerçek analyze sonucu ve same-origin WebSocket doğrulandı.
+- Kullanıcının açık onayıyla Resend ayarları aktarıldı; watcher suspicious finding için email delivery logunu üretti.
 
 ## Tasarım sınırları
 
@@ -114,12 +114,12 @@ npm run check
 
 ## Blocker'lar
 
-- Unified serviste email alert entegrasyonu credential aktarımı bekliyor.
+- Resend API key güvenlik rotasyonu ve yeni key'in unified servise yazılması bekliyor.
 - Eski ayrı frontend/backend Render servisleri silinmedi.
 
 ## Sonraki görevler
 
-1. **Salik:** Açık onay sonrası Resend credentials'ı unified servise ekleyip live email'i tekrar doğrula.
+1. **Salik:** Resend API key'i rotate et; unified serviste güncelleyip live email'i tekrar doğrula.
 2. **Ortak:** 90 saniyelik demo provası ve backup ekran kaydı hazırla.
 3. **Operasyon:** Kullanıcı isterse eski ayrı Render servislerini kaldır.
 
