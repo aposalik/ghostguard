@@ -46,7 +46,7 @@ export function AnalysisPanel({ state, data, error, errorInfo, onRetry }: Analys
               <p>
                 {state === 'loading'
                   ? 'GhostGuard is parsing the Monad transaction receipt, extracting log topics, and verifying against verified token contracts.'
-                  : 'Paste a transaction hash above or select a 90-second judge preset to compare legitimate token transfers against spoofed events.'}
+                  : 'Paste a real Monad Testnet transaction hash above to inspect its receipt, emitter, and transfer evidence.'}
               </p>
             </div>
           </div>
