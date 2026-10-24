@@ -96,13 +96,14 @@ Tamamlanan ilk dilim:
 - İki contract deploy edildi; gerçek transfer ve event-only seed transaction'ları RPC ve API üzerinden doğrulandı.
 - **Kabul:** Explorer ve RPC iki işlemi aynı chain'de gösterir.
 
-### B4 — Gerçek RPC doğrulaması ve public backend (P0, `IN PROGRESS`)
+### B4 — Gerçek RPC doğrulaması ve public backend (P0, `DONE`)
 
 - B2'yi B3'ün gerçek adres/hash'leriyle integration test et.
 - Render/Railway/Fly.io benzeri long-running hostta HTTPS backend.
 - Fahad'ın kesin frontend origin'ini CORS allowlist'e ekle.
-- Render Blueprint ücretsiz web service ve RPC-independent `/health/live` için hazır; ücretsiz planda SQLite verisi ephemeral ve watcher uyku sırasında durur.
-- **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır.
+- Ücretsiz Render web service `https://ghostguard-backend-kmrj.onrender.com` üzerinde live; `/health/live`, `/health` ve iki gerçek analyze isteği dış ağdan doğrulandı.
+- Public frontend URL oluştuğunda mevcut localhost CORS origin'i genişletilecek. Ücretsiz planda SQLite verisi ephemeral ve watcher uyku sırasında durur.
+- **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır. **PASSED**
 
 ### B5 — Persistence, watcher ve notifications (P1, `IN PROGRESS`)
 
@@ -125,6 +126,6 @@ Tamamlanan ilk dilim:
 | Fixture analyzer/API | Salik | Ortak tipler | DONE | 21 test + iki gerçek tx API doğrulaması |
 | Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
 | Quick Demo + final API UI | Fahad | B2/B3 | IN PROGRESS | Gerçek hashlerle UI |
-| Public backend | Salik | B2/B3 | IN PROGRESS | Render config hazır; external service creation bekliyor |
+| Public backend | Salik | B2/B3 | DONE | Free Render service live; health + iki gerçek analyze doğrulandı |
 | Public frontend | Fahad | B4 | TODO | HTTPS UI |
 | 90 saniyelik demo | Ortak | Tüm P0 | TODO | İki tx doğru ayrılır |

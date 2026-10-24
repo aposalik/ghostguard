@@ -64,12 +64,14 @@
 - Public RPC `1000` blok sorgusuna HTTP 413 verdiği için varsayılan range `100` blok olarak sınırlandı.
 - Resend test sender ile pending `SUSPICIOUS_EVENT` email'i provider tarafından kabul edildi; SQLite `alerted_at` alanı acceptance sonrası yazıldı. Inbox görünürlüğü kullanıcı tarafından doğrulanmalıdır.
 
-### Public backend hazırlığı
+### Public backend
 
 - Railway signup geçici olarak kapalı olduğu için hedef Render web service olarak değiştirildi.
 - Kullanıcının sıfır maliyet tercihi nedeniyle root `render.yaml` ücretsiz planı, ephemeral `/tmp/ghostguard.db` SQLite yolunu ve secret prompt'larını tanımlar; restart/spin-down veriyi silebilir ve watcher'ı durdurabilir.
 - RPC'den bağımsız `GET /health/live` endpoint'i hosting liveness probe'u için eklendi.
-- Root check 31 backend + 3 frontend test ile geçti; actual Render service henüz oluşturulmadı.
+- Render service `https://ghostguard-backend-kmrj.onrender.com` üzerinde live. Public `/health/live` ve `/health` başarılı; chain ID `10143`.
+- Gerçek token işlemi public API'de `VERIFIED_DEMO_TRANSFER`, event-only işlemi `SUSPICIOUS_EVENT` verdi. Watcher iki bulguyu da startup backfill sırasında kaydetti.
+- Root check 31 backend + 3 frontend test ile geçti.
 
 ## Doğrulanan komutlar
 
@@ -100,27 +102,27 @@ Sonuç:
 - 4 test dosyasında 21 test geçti.
 - Backend production build geçti.
 
-Final root `npm run check` geçti: frontend 3 test + backend 21 test, iki workspace için lint/typecheck/build başarılı. Compiled backend server start edildi; gerçek RPC yapılandırılmadığı durumda `/health` beklenen `503 degraded`, analyze endpoint'i canonical `RPC_UNAVAILABLE` döndürdü.
+Final root `npm run check` geçti: frontend 3 test + backend 31 test, iki workspace için lint/typecheck/build başarılı.
 
 ## Kısmi
 
-- Analyzer fixture/fake RPC ile doğrulandı; gerçek Monad RPC/seed tx integration testi yok.
+- Analyzer hem fixture/fake RPC hem gerçek Monad RPC üzerindeki iki seed transaction ile doğrulandı.
 - `TOKEN_STATE_SUPPORTS_CLAIM` bilinçli olarak `UNKNOWN`; balance-delta kanıtı henüz uygulanmadı.
-- Frontend endpoint şemasına hazır, ancak gerçek uçtan uca çalışma deployed contracts/backend bekliyor.
+- Frontend endpoint şemasına hazır; deployed contracts ve public backend mevcut, frontend bağlantısı bekliyor.
 
 ## Henüz yok / blocker
 
-1. Public backend/frontend URL yok.
+1. Public frontend URL yok.
 2. Frontend quick-demo hash yapılandırması ve public E2E doğrulaması tamamlanmadı.
 3. `GET /api/v1/findings` ve WebSocket P1 uçları uygulanmadı.
 
 ## Git/TLS notu
 
-Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapıldı. Backend branch henüz push edilmedi.
+Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapıldı. Backend branch push edildi.
 
 ## Hemen sonraki iş
 
-- Public backend'i doğrulanmış adreslerle deploy et ve frontend CORS origin'ini ekle.
+- Public frontend URL oluşunca Render `CORS_ORIGINS` değerine ekle.
 - Frontend quick-demo girişlerini gerçek iki hash ile bağla ve public E2E doğrula.
 - Findings HTTP pagination ve WebSocket delivery uçlarını uygula.
 - Fahad, local backend contract'ına karşı F2 entegrasyonunu bağımsız geliştirebilir.

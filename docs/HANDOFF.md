@@ -63,12 +63,14 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Real RPC backfill transaction hash girdisi olmadan event-only seed'i otomatik bulup `SUSPICIOUS_EVENT` üretti.
 - Resend test sender üzerinden gerçek API acceptance başarıyla doğrulandı; pending finding `alerted_at` ile tamamlandı. Inbox görünürlüğü kullanıcı teyidi bekler.
 
-## Public backend deployment hazırlığı
+## Public backend deployment
 
 - Railway signup kapalı olduğu için Render seçildi.
 - `render.yaml` ücretsiz Node web service, Frankfurt region, ephemeral `/tmp/ghostguard.db`, public config ve dashboard-entered secrets içerir. Ücretsiz host restart/spin-down durumunda SQLite verisi kaybolabilir ve watcher durur.
 - `/health/live` RPC-independent liveness endpoint'i eklendi ve testlidir.
-- Render service/account oluşturma ve public URL doğrulaması henüz yapılmadı.
+- Render service live: `https://ghostguard-backend-kmrj.onrender.com`.
+- Public `/health/live`, Monad-aware `/health` ve iki gerçek transaction analyze isteği doğrulandı; sonuçlar sırasıyla `VERIFIED_DEMO_TRANSFER` ve `SUSPICIOUS_EVENT`.
+- Public frontend URL belirlendiğinde `CORS_ORIGINS` Render environment değerine eklenmelidir.
 
 ## Tasarım sınırları
 
@@ -95,14 +97,14 @@ npm run check
 
 ## Blocker'lar
 
-- Public backend/frontend URL yok.
+- Public frontend URL yok; public backend live.
 - Findings HTTP/WebSocket delivery uçları henüz yok.
 
 ## Sonraki üç görev
 
-1. **Salik:** Public repo URL + `render.yaml` ile Render backend service oluştur; secret env değerlerini dashboard'dan gir.
-2. **Fahad + Salik:** Local/public frontend entegrasyonunu gerçek iki hash'le doğrula.
-3. **P1:** Findings HTTP/WebSocket uçlarını tamamla ve public hostta watcher sürekliliğini doğrula.
+1. **Fahad + Salik:** Public frontend entegrasyonunu gerçek iki hash ve Render backend URL'siyle doğrula; frontend origin'ini CORS'a ekle.
+2. **P1:** Findings HTTP/WebSocket uçlarını tamamla.
+3. **Operasyon:** Ücretsiz hostun spin-down ve ephemeral SQLite sınırlamalarını demo akışında belgeleyip doğrula.
 
 ## Resume protokolü
 
