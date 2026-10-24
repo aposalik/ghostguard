@@ -21,7 +21,7 @@ Kaynak TypeScript tipleri: `shared/types/index.ts`. Bu belge ve tipler ortak sah
 }
 ```
 
-`chainId: 0` sadece degraded/örnek durumudur; gerçek chain ID RPC'den okunur. Sağlıklı cevap HTTP `200`, RPC'ye erişilemeyen degraded cevap aynı şemayla HTTP `503` döner.
+`chainId: 0` sadece bu belgedeki şema örneğidir; gerçek Monad Testnet chain ID'si konfigürasyondan doğrulanmalıdır.
 
 ## `POST /api/v1/transactions/analyze`
 
@@ -34,7 +34,7 @@ Kaynak TypeScript tipleri: `shared/types/index.ts`. Bu belge ve tipler ortak sah
 }
 ```
 
-`expectedTokenAddress` opsiyoneldir. Backend allowlist'i geçersiz kılmaz; yalnızca karşılaştırma bağlamıdır. `TRUSTED_DEMO_TOKEN_ADDRESS` configured ise bulgudaki beklenen token ve kesin `VERIFIED_DEMO_TRANSFER` kararı için bu server-side değer önceliklidir. Trusted adres configured değilse request adresi gösterilebilir fakat tek başına verified sınıfı üretemez.
+`expectedTokenAddress` opsiyoneldir. Backend allowlist'i geçersiz kılmaz; yalnızca karşılaştırma bağlamıdır.
 
 Başarılı cevap:
 
@@ -73,8 +73,6 @@ Sınıflandırmalar:
 - `FAILED_TRANSACTION`: receipt reverted.
 - `PENDING`: transaction henüz kesin receipt'e sahip değil.
 
-İlk backend diliminde reverted receipt, `transaction.receiptStatus = REVERTED` ve boş `findings` ile döner; başarılı transfer bulgusu uydurulmaz. Token balance-delta kontrolü henüz yoktur ve `TOKEN_STATE_SUPPORTS_CLAIM` check'i `UNKNOWN` kalır.
-
 ## `GET /api/v1/findings?limit=20&cursor=<opaque>`
 
 ```json
@@ -101,7 +99,7 @@ WebSocket P1 kapsamındadır. Frontend reconnect/backoff uygulamalı; HTTP endpo
 
 ## Hata şekli
 
-HTTP durumları: `400` geçersiz JSON/body/hash/address, `404` receipt bulunamayan işlem, `503` RPC erişim/sağlık sorunu, `500` beklenmeyen hata. Hata kodları: `INVALID_REQUEST`, `INVALID_TRANSACTION_HASH`, `TRANSACTION_NOT_FOUND`, `RPC_UNAVAILABLE`, `INTERNAL_ERROR`.
+HTTP durumları: `400` geçersiz hash, `404` bulunamayan kesin işlem, `502/503` RPC erişim sorunu, `500` beklenmeyen hata.
 
 ```json
 {

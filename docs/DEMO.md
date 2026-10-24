@@ -1,14 +1,13 @@
 # 90 Saniyelik Demo
 
-> Monad Testnet deployment ve iki kontrollü seed transaction RPC üzerinden doğrulandı. Public hosting henüz tamamlanmadı.
+> Henüz deployment yapılmadı. Aşağıdaki alanlar gerçek testnet kanıtı olmadan doldurulmayacaktır.
 
 ## Hazırlık kontrolü
 
 - [ ] Public frontend URL harici cihazdan açıldı.
 - [ ] Backend `/health` cevap verdi.
-- [x] DemoToken ve DemoEventOnly adresleri RPC'de contract bytecode ile doğrulandı.
-- [x] İki transaction hash'i aynı chain'de doğrulandı.
-- [x] Backend iki hash'i doğru sınıflandırıyor.
+- [ ] DemoToken ve DemoEventOnly adresleri explorer'da doğrulandı.
+- [ ] İki transaction hash'i aynı chain'de doğrulandı.
 - [ ] Dashboard iki hash'i önceden analiz edebiliyor.
 - [ ] Backup ekran kaydı/screenshot gerçek sonuçlarla hazırlandı.
 
@@ -30,18 +29,11 @@ DemoEventOnly transaction hash'ini yapıştır. Event içindeki from/to/amount b
 
 - Public app URL: `TBD`
 - Backend URL: `TBD`
-- Chain ID: `10143`
-- DemoToken address: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`
-- DemoEventOnly address: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`
-- Gerçek transfer tx: `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f`
-- Event-only tx: `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4`
-
-## RPC/API doğrulaması
-
-- Dört deployment/seed receipt'i başarılıdır.
-- Gerçek transfer recipient balance'ını `25 GGD` artırdı ve API `VERIFIED_DEMO_TRANSFER` döndürdü.
-- Event-only işlem aynı Transfer biçimini farklı emitter'dan yayımladı; token balance değiştirmedi ve API `SUSPICIOUS_EVENT` döndürdü.
-- Bu aşamada otomatik watcher, persistence ve email bildirimi yoktur; transaction hash API'ye elle verilir.
+- Chain ID: `TBD`
+- DemoToken address: `TBD`
+- DemoEventOnly address: `TBD`
+- Gerçek transfer tx: `TBD`
+- Event-only tx: `TBD`
 
 ## Backup prosedürü
 

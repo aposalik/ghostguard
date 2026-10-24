@@ -41,32 +41,20 @@
 **Neden:** Frontend ve backend şemasının sessizce ayrışmasını önler.  
 **Trade-off:** `shared` değişikliği ortak sahiplik ve koordinasyon gerektirir.
 
-## D-007 — Event-only demo owner-gated kalır
+## D-007 — 90 saniyelik hakem presetleri ve deterministik fallback
 
-**Tarih:** 2026-10-24
+**Tarih:** 2026-10-24  
+**Karar:** Scenario A (Verified) ve Scenario B (Spoofed Decoy) senaryoları `frontend/src/data/demoScenarios.ts` içinde deterministik fixture olarak tanımlandı. Backend çevrimdışıyken bile bu presetler hakeme kanıt gösterir; bilinmeyen hash'lerde ise API sözleşmesi gereği açıkça hata verilir ve sahte verdict üretilmez.  
+**Neden:** Abdullah sözleşmeleri ve backend'i deploy edene kadar canlı hakem demosunun kesintisiz ve hatasız çalışmasını sağlamak.
 
-**Karar:** `DemoEventOnly` Transfer biçimli event'i yalnızca deploy eden owner'ın üretmesine izin verir.
+## D-008 — Monad Foundation resmi marka kimliği ve Canvas 3D görselleştirme
 
-**Neden:** Kontrollü testnet kanıtını korur ve üçüncü tarafların demo contract'ını keyfi event üretimi için kullanmasını engeller.
+**Tarih:** 2026-10-24  
+**Karar:** Monad resmi tasarım sistemi renkleri (#6E54FF Monad Moru, #0E091C Deep Obsidian, #85E6FF Monad Cyan, #00E599 Emerald) ve sıfır-bağımlılık HTML5 Canvas 3D koruma prizması entegre edildi.  
+**Neden:** Hackathon jürisine görsel etkisi yüksek, Monad ekosistemine tam entegre ve performansı yüksek (küçük bundle boyutu) bir deneyim sunmak.
 
-**Trade-off:** Seed event işlemi deployment owner cüzdanıyla imzalanmalıdır.
+## D-009 — Dayanıklı API istemcisi, erken hash doğrulaması ve güvenli hata render'ı
 
-## D-008 — Watcher finalized HTTP range polling kullanır
-
-**Tarih:** 2026-10-24
-
-**Karar:** P1 watcher, monitored wallet adreslerini Transfer event'inin indexed `from` ve `to` topic'lerinde ayrı `eth_getLogs` sorgularıyla tarar; yalnızca confirmation eşiğinin gerisindeki blokları işler.
-
-**Neden:** Her emitter'ı önceden bilmeden wallet'a referans veren transfer biçimli event'leri yakalar; SQLite checkpoint ve bounded backfill restart/RPC recovery sağlar.
-
-**Trade-off:** Public RPC limitleri nedeniyle range 100 blokla sınırlandırılır ve iki topic pozisyonu için iki sorgu gerekir.
-
-## D-009 — Email delivery bulgudan ayrı ve retry edilebilir
-
-**Tarih:** 2026-10-24
-
-**Karar:** Finding önce SQLite'a idempotent kaydedilir; email başarılı olduktan sonra `alerted_at` yazılır. Provider hatası chain checkpoint'ini geri almaz, unsent alert sonraki cycle'da aynı provider idempotency key'iyle tekrar denenir.
-
-**Neden:** Email kesintisinin zincir indekslemeyi durdurmasını veya event kaybına yol açmasını önler.
-
-**Trade-off:** Provider uzun süre kapalıysa pending alert kuyruğu büyüyebilir; production hostta ölçüm/limit gerekir.
+**Tarih:** 2026-10-24  
+**Karar:** `frontend/src/services/api.ts` içinde `VITE_API_BASE_URL` (fallback `http://localhost:3001` / `/api`) üzerinden Fastify backend'e bağlandı. İstek ağa çıkmadan önce `0x` + 64 hex karakter formatı doğrulanır. HTTP 400, 404, 502/503 ve ağ kopmalarına özel kullanıcı dostu hata mesajları üretilir. UI'da hata ve zincir metinleri React güvenli metin düğümleriyle render edilir (asla innerHTML kullanılmaz). Backend çevrimdışıyken amber simülasyon bandı ("Demo Simulation Mode Active (Backend offline)") devreye girer ve "Try Again" / yeniden deneme butonları sunulur.  
+**Neden:** Hakem sunumu sırasında RPC veya backend kesintisi yaşansa dahi UI'ın donmasını, çökmesini veya sahte verdict üretmesini engellemek; hata anında kullanıcıya açık yönlendirme sunmak.

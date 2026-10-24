@@ -16,10 +16,6 @@ Deterministic Analyzer ── findings ────────┘
        └──► HTTP API / WebSocket ──► React Dashboard
 ```
 
-## Uygulama durumu
-
-Receipt/log analyzer gerçek Monad seed işlemleriyle doğrulanmıştır. Finalized-block polling watcher, SQLite checkpoint/findings ve retry edilebilir email transport uygulanmıştır. Gerçek RPC backfill'i kontrollü suspicious event'i transaction hash girdisi olmadan bulmuştur. Public hosting, gerçek inbox delivery ve WebSocket henüz doğrulanmamıştır. Balance-state check uygulanana kadar bu kanıt `UNKNOWN` kalır.
-
 ## Bileşen sorumlulukları
 
 ### Frontend
