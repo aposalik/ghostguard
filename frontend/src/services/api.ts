@@ -18,7 +18,7 @@ export interface WsFindingCreatedMessage {
 }
 
 export const DEFAULT_API_BASE_URL = import.meta.env.PROD
-  ? 'https://ghostguard-backend-kmrj.onrender.com'
+  ? ''
   : 'http://localhost:3000'
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ??
@@ -193,7 +193,8 @@ export async function checkBackendHealth(): Promise<HealthResponse> {
 }
 
 export async function fetchRecentFindings(limit = 20, cursor?: string): Promise<FindingsPage> {
-  const url = new URL(`${API_BASE_URL}/api/v1/findings`)
+  const browserOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+  const url = new URL(`${API_BASE_URL}/api/v1/findings`, browserOrigin)
   url.searchParams.set('limit', String(limit))
   if (cursor) {
     url.searchParams.set('cursor', cursor)

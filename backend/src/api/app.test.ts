@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type {
   AnalyzeTransactionRequest,
   AnalyzeTransactionResponse,
@@ -34,6 +37,23 @@ describe('GhostGuard API', () => {
       status: 'ok',
       endpoints: { health: '/health', findings: '/api/v1/findings' },
     })
+  })
+
+  it('serves the built frontend and keeps API information under /api', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'ghostguard-frontend-'))
+    writeFileSync(join(directory, 'index.html'), '<!doctype html><title>GhostGuard dashboard</title>')
+
+    try {
+      const app = await createApp(new FakeService(), { frontendDirectory: directory })
+      const dashboard = await app.inject({ method: 'GET', url: '/' })
+      const api = await app.inject({ method: 'GET', url: '/api' })
+
+      expect(dashboard.statusCode).toBe(200)
+      expect(dashboard.body).toContain('GhostGuard dashboard')
+      expect(api.json()).toMatchObject({ name: 'GhostGuard API', status: 'ok' })
+    } finally {
+      rmSync(directory, { recursive: true, force: true })
+    }
   })
 
   it('provides an RPC-independent liveness endpoint for the hosting platform', async () => {
@@ -209,6 +229,23 @@ describe('GhostGuard API', () => {
     await expect(message).resolves.toBe(JSON.stringify({ type: 'finding.created', data: finding }))
     socket.close()
   })
+
+  it('accepts a same-origin WebSocket connection behind an HTTPS proxy', async () => {
+    const events = new FakeEvents()
+    const app = await createApp(new FakeService(), { events })
+    await app.ready()
+    const socket = await app.injectWS('/api/v1/events', {
+      headers: {
+        host: 'ghostguard.example',
+        origin: 'https://ghostguard.example',
+        'x-forwarded-proto': 'https',
+      },
+    })
+
+    await events.subscribed
+    expect(socket.readyState).toBe(1)
+    socket.close()
+  })
 })
 
 class FakeService implements AnalysisService {
@@ -299,6 +336,7 @@ function createFinding(): SecurityFinding {
 interface CreateAppOptions {
   findings?: Pick<FindingStore, 'listFindings'>
   events?: FindingEventSource
+  frontendDirectory?: string
 }
 
 async function createApp(service: AnalysisService, options: CreateAppOptions = {}): Promise<FastifyInstance> {
@@ -306,6 +344,7 @@ async function createApp(service: AnalysisService, options: CreateAppOptions = {
     service,
     findings: options.findings,
     events: options.events,
+    frontendDirectory: options.frontendDirectory,
     corsOrigins: ['http://localhost:5173'],
   })
   apps.push(app)
