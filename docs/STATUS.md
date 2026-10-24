@@ -2,9 +2,9 @@
 
 **Tarih:** 2026-10-24
 
-**Aktif backend branch:** `feature/backend-analyzer`
+**Aktif entegrasyon branch'i:** `feature/live-findings`
 
-**Branch tabanı:** `511a866` (`origin/main`)
+**Branch tabanı:** `398851c` (`origin/main`)
 
 **Sahiplik:** Fahad frontend; Salik backend/contracts
 
@@ -13,8 +13,9 @@
 ### Ortak / frontend baseline
 
 - Monorepo, ortak TypeScript API tipleri ve proje belgeleri mevcut.
-- Fahad'ın frontend foundation'ı hash validation, loading/error/result ve responsive layout ile çalışıyor.
-- Bu backend branch'i `frontend/` kodunu değiştirmedi; yalnızca ownership README satırı güncellendi.
+- Fahad'ın dashboard PR'ı incelendi; semantic düzeltmeler corrective PR #8 ile `main` branch'ine merge edildi.
+- Dashboard gerçek iki Monad transaction'ını Quick Demo olarak kullanır, live API'yi varsayılan seçer ve yalnızca açık etiketli recorded response fallback'i sunar.
+- Backend health, findings geçmişi, WebSocket reconnect/backoff ve HTTP recovery frontend'de uygulanmıştır.
 
 ### Backend ilk dikey dilim
 
@@ -63,13 +64,18 @@
 - Gerçek Monad backfill testi transaction hash verilmeden event-only seed'i otomatik buldu.
 - Public RPC `1000` blok sorgusuna HTTP 413 verdiği için varsayılan range `100` blok olarak sınırlandı.
 - Resend test sender ile pending `SUSPICIOUS_EVENT` email'i provider tarafından kabul edildi; SQLite `alerted_at` alanı acceptance sonrası yazıldı. Inbox görünürlüğü kullanıcı tarafından doğrulanmalıdır.
+- `GET /api/v1/findings` bulguları `analyzedAt DESC, id DESC` sırasıyla opaque cursor üzerinden sayfalar.
+- `WS /api/v1/events`, watcher'ın yeni kaydettiği bulguları `finding.created` olarak yayınlar ve browser origin allowlist'ini uygular.
+- Public base URL için servis/endpoints bilgisi döndüren `GET /` eklendi.
 
-### Public backend hazırlığı
+### Public backend
 
 - Railway signup geçici olarak kapalı olduğu için hedef Render web service olarak değiştirildi.
 - Kullanıcının sıfır maliyet tercihi nedeniyle root `render.yaml` ücretsiz planı, ephemeral `/tmp/ghostguard.db` SQLite yolunu ve secret prompt'larını tanımlar; restart/spin-down veriyi silebilir ve watcher'ı durdurabilir.
 - RPC'den bağımsız `GET /health/live` endpoint'i hosting liveness probe'u için eklendi.
-- Root check 31 backend + 3 frontend test ile geçti; actual Render service henüz oluşturulmadı.
+- Render service `https://ghostguard-backend-kmrj.onrender.com` üzerinde live. Public `/health/live` ve `/health` başarılı; chain ID `10143`.
+- Gerçek token işlemi public API'de `VERIFIED_DEMO_TRANSFER`, event-only işlemi `SUSPICIOUS_EVENT` verdi. Watcher iki bulguyu da startup backfill sırasında kaydetti.
+- Deployed sürümün root URL'si yeni entegrasyon deploy edilene kadar 404 döner; `/health/live`, `/health` ve analyze endpoint'leri çalışır.
 
 ## Doğrulanan komutlar
 
@@ -92,7 +98,7 @@ Sonuç:
 
 - Foundry format ve lint kontrolleri geçti; 3 contract testi geçti.
 - Deployment+seed script'i local ve chain 10143 RPC üzerinde broadcast edilmeden geçti.
-- Backend 7 dosyada 30 test geçti; watcher yüz normal event + bir suspicious event, dedup, retry ve restart recovery senaryolarını kapsar.
+- Backend 7 dosyada 38 test geçti; watcher yüz normal event + bir suspicious event, dedup, retry, restart recovery, findings pagination ve WebSocket senaryolarını kapsar.
 - Real-RPC watcher backfill'i `0x321987...07c4` işlemini otomatik `SUSPICIOUS_EVENT` buldu.
 - npm audit: 0 vulnerability.
 - Backend lint: 0 warning / 0 error.
@@ -100,27 +106,27 @@ Sonuç:
 - 4 test dosyasında 21 test geçti.
 - Backend production build geçti.
 
-Final root `npm run check` geçti: frontend 3 test + backend 21 test, iki workspace için lint/typecheck/build başarılı. Compiled backend server start edildi; gerçek RPC yapılandırılmadığı durumda `/health` beklenen `503 degraded`, analyze endpoint'i canonical `RPC_UNAVAILABLE` döndürdü.
+Final root `npm run check` geçti: frontend 16 test + backend 38 test, iki workspace için lint/typecheck/build başarılı.
 
 ## Kısmi
 
-- Analyzer fixture/fake RPC ile doğrulandı; gerçek Monad RPC/seed tx integration testi yok.
+- Analyzer hem fixture/fake RPC hem gerçek Monad RPC üzerindeki iki seed transaction ile doğrulandı.
 - `TOKEN_STATE_SUPPORTS_CLAIM` bilinçli olarak `UNKNOWN`; balance-delta kanıtı henüz uygulanmadı.
-- Frontend endpoint şemasına hazır, ancak gerçek uçtan uca çalışma deployed contracts/backend bekliyor.
+- Frontend ve backend endpoint şeması kod düzeyinde entegre; public backend'in yeni commit'e deploy edilmesi ve public frontend URL'si bekleniyor.
 
 ## Henüz yok / blocker
 
-1. Public backend/frontend URL yok.
-2. Frontend quick-demo hash yapılandırması ve public E2E doğrulaması tamamlanmadı.
-3. `GET /api/v1/findings` ve WebSocket P1 uçları uygulanmadı.
+1. Public frontend URL yok.
+2. Public frontend origin'i Render `CORS_ORIGINS` listesine henüz eklenmedi.
+3. Findings/WebSocket entegrasyon commit'i henüz public Render servisine deploy edilmedi.
 
 ## Git/TLS notu
 
-Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapıldı. Backend branch henüz push edilmedi.
+Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapıldı. Backend branch push edildi.
 
 ## Hemen sonraki iş
 
-- Public backend'i doğrulanmış adreslerle deploy et ve frontend CORS origin'ini ekle.
-- Frontend quick-demo girişlerini gerçek iki hash ile bağla ve public E2E doğrula.
-- Findings HTTP pagination ve WebSocket delivery uçlarını uygula.
-- Fahad, local backend contract'ına karşı F2 entegrasyonunu bağımsız geliştirebilir.
+- Public frontend URL oluşunca Render `CORS_ORIGINS` değerine ekle.
+- Entegrasyon branch'ini merge edip Render servisini `main` branch'inden deploy et.
+- Public frontend'i deploy et ve kesin origin'i Render `CORS_ORIGINS` değerine ekle.
+- Public HTTP findings, WebSocket delivery ve dashboard akışını uçtan uca doğrula.

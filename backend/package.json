@@ -14,11 +14,13 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.3.1",
+    "@fastify/websocket": "^11.3.4",
     "@ghostguard/shared": "*",
     "fastify": "^5.12.7"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/ws": "^8.18.2",
     "oxlint": "^1.89.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",

@@ -1,4 +1,5 @@
 import cors from '@fastify/cors'
+import websocket from '@fastify/websocket'
 import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify'
 import type {
   AnalyzeTransactionRequest,
@@ -9,12 +10,16 @@ import type {
 import type { AnalysisService } from '../analyzer/transaction-analyzer.js'
 import { TransactionNotFoundError } from '../analyzer/errors.js'
 import { RpcUnavailableError } from '../watcher/rpc.js'
+import { InvalidFindingsCursorError, type FindingStore } from '../watcher/store.js'
+import type { FindingEventSource } from './finding-events.js'
 
 const TRANSACTION_HASH_PATTERN = /^0x[a-fA-F0-9]{64}$/
 const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
 
 export interface BuildAppOptions {
   service: AnalysisService
+  findings?: Pick<FindingStore, 'listFindings'>
+  events?: FindingEventSource
   corsOrigins?: string[]
   logger?: boolean
 }
@@ -23,6 +28,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   const app = Fastify({ logger: options.logger ?? false })
   const allowedOrigins = new Set(options.corsOrigins ?? [])
 
+  await app.register(websocket)
   await app.register(cors, {
     origin(origin, callback) {
       if (!origin || allowedOrigins.has(origin)) {
@@ -32,6 +38,17 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       callback(null, false)
     },
   })
+
+  app.get('/', async () => ({
+    name: 'GhostGuard API',
+    status: 'ok',
+    endpoints: {
+      health: '/health',
+      analyze: '/api/v1/transactions/analyze',
+      findings: '/api/v1/findings',
+      events: '/api/v1/events',
+    },
+  }))
 
   app.setErrorHandler((error, request, reply) => {
     if (hasStatusCode(error) && error.statusCode < 500) {
@@ -48,6 +65,40 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   })
 
   app.get('/health/live', async () => ({ status: 'ok' }))
+
+  app.get('/api/v1/findings', async (request, reply) => {
+    const parsed = parseFindingsQuery(request.query)
+    if (!parsed.ok) return sendError(reply, 400, 'INVALID_REQUEST', parsed.message, request.id)
+    if (!options.findings) return { items: [], nextCursor: null }
+
+    try {
+      return options.findings.listFindings(parsed.limit, parsed.cursor)
+    } catch (error) {
+      if (error instanceof InvalidFindingsCursorError) {
+        return sendError(reply, 400, 'INVALID_REQUEST', error.message, request.id)
+      }
+      throw error
+    }
+  })
+
+  await app.register(async function eventRoutes(routes) {
+    routes.get('/api/v1/events', { websocket: true }, (socket, request) => {
+      const origin = request.headers.origin
+      if (origin && !allowedOrigins.has(origin)) {
+        socket.close(1008, 'Origin is not allowed.')
+        return
+      }
+
+      const unsubscribe = options.events?.subscribe((finding) => {
+        if (socket.readyState === 1) {
+          socket.send(JSON.stringify({ type: 'finding.created', data: finding }))
+        }
+      }) ?? (() => {})
+
+      socket.once('close', unsubscribe)
+      socket.once('error', unsubscribe)
+    })
+  })
 
   app.post('/api/v1/transactions/analyze', async (request, reply) => {
     const parsed = parseAnalyzeRequest(request.body)
@@ -76,6 +127,26 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   })
 
   return app
+}
+
+type ParsedFindingsQuery =
+  | { ok: true; limit: number; cursor?: string }
+  | { ok: false; message: string }
+
+function parseFindingsQuery(query: unknown): ParsedFindingsQuery {
+  if (!isRecord(query)) return { ok: false, message: 'Query parameters are invalid.' }
+  const rawLimit = query.limit
+  const limit = rawLimit === undefined ? 20 : Number(rawLimit)
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+    return { ok: false, message: 'Limit must be an integer between 1 and 100.' }
+  }
+
+  const rawCursor = query.cursor
+  if (rawCursor !== undefined && (typeof rawCursor !== 'string' || rawCursor.length === 0)) {
+    return { ok: false, message: 'Cursor must be a non-empty string.' }
+  }
+
+  return { ok: true, limit, ...(typeof rawCursor === 'string' ? { cursor: rawCursor } : {}) }
 }
 
 type ParsedRequest =

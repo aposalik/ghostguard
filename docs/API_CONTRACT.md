@@ -23,6 +23,8 @@ Kaynak TypeScript tipleri: `shared/types/index.ts`. Bu belge ve tipler ortak sah
 
 `chainId: 0` sadece degraded/örnek durumudur; gerçek chain ID RPC'den okunur. Sağlıklı cevap HTTP `200`, RPC'ye erişilemeyen degraded cevap aynı şemayla HTTP `503` döner.
 
+Hosting liveness kontrolü RPC'den bağımsız `GET /health/live` üzerinden `{ "status": "ok" }` döner. `GET /` servis adını ve kullanılabilir endpoint yollarını listeler.
+
 ## `POST /api/v1/transactions/analyze`
 
 İstek:
@@ -85,6 +87,7 @@ Sınıflandırmalar:
 ```
 
 Cursor opaque kabul edilir. Varsayılan sıralama `analyzedAt DESC, id DESC` olmalıdır.
+`limit` varsayılan olarak `20`, en az `1`, en fazla `100` değerini alır. Geçersiz limit veya cursor canonical `400 INVALID_REQUEST` cevabı üretir. Watcher kapalıysa endpoint boş sayfa döndürür.
 
 ## `WS /api/v1/events`
 
@@ -97,7 +100,7 @@ Sunucudan istemciye mesaj:
 }
 ```
 
-WebSocket P1 kapsamındadır. Frontend reconnect/backoff uygulamalı; HTTP endpoint her zaman kurtarma yolu olmalıdır.
+Endpoint watcher'ın SQLite'a yeni kaydettiği bulguları yayınlar. Frontend reconnect/backoff uygular; HTTP endpoint bağlantı kesintilerinde kurtarma ve geçmiş kaynağıdır. Browser `Origin` değeri HTTP CORS allowlist'iyle aynı listeden doğrulanır.
 
 ## Hata şekli
 

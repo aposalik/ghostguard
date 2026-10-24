@@ -1,12 +1,25 @@
 import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
-import type { SecurityFinding } from '@ghostguard/shared'
+import type { FindingsPage, SecurityFinding } from '@ghostguard/shared'
+
+interface FindingsCursor {
+  analyzedAt: string
+  id: string
+}
+
+export class InvalidFindingsCursorError extends Error {
+  constructor() {
+    super('The findings cursor is invalid.')
+    this.name = 'InvalidFindingsCursorError'
+  }
+}
 
 export interface FindingStore {
   getCheckpoint(chainId: number, streamKey: string): bigint | null
   saveCheckpoint(chainId: number, streamKey: string, blockNumber: bigint): void
   saveFinding(finding: SecurityFinding): boolean
+  listFindings(limit: number, cursor?: string): FindingsPage
   pendingAlerts(limit?: number): SecurityFinding[]
   markAlerted(id: string, alertedAt: string): void
   close(): void
@@ -83,6 +96,36 @@ export class SqliteFindingStore implements FindingStore {
     return result.changes === 1
   }
 
+  listFindings(limit: number, cursor?: string): FindingsPage {
+    const decoded = cursor ? decodeCursor(cursor) : undefined
+    const rows = decoded
+      ? this.database.prepare(`
+          SELECT id, payload_json AS payload, analyzed_at AS analyzedAt
+          FROM findings
+          WHERE analyzed_at < ? OR (analyzed_at = ? AND id < ?)
+          ORDER BY analyzed_at DESC, id DESC
+          LIMIT ?
+        `).all(decoded.analyzedAt, decoded.analyzedAt, decoded.id, limit + 1)
+      : this.database.prepare(`
+          SELECT id, payload_json AS payload, analyzed_at AS analyzedAt
+          FROM findings
+          ORDER BY analyzed_at DESC, id DESC
+          LIMIT ?
+        `).all(limit + 1)
+
+    const typedRows = rows as Array<{ id: string; payload: string; analyzedAt: string }>
+    const hasNextPage = typedRows.length > limit
+    const pageRows = typedRows.slice(0, limit)
+    const last = pageRows.at(-1)
+
+    return {
+      items: pageRows.map((row) => JSON.parse(row.payload) as SecurityFinding),
+      nextCursor: hasNextPage && last
+        ? encodeCursor({ analyzedAt: last.analyzedAt, id: last.id })
+        : null,
+    }
+  }
+
   pendingAlerts(limit = 100): SecurityFinding[] {
     const rows = this.database.prepare(`
       SELECT payload_json AS payload
@@ -101,4 +144,25 @@ export class SqliteFindingStore implements FindingStore {
   close(): void {
     this.database.close()
   }
+}
+
+function encodeCursor(cursor: FindingsCursor): string {
+  return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url')
+}
+
+function decodeCursor(cursor: string): FindingsCursor {
+  try {
+    const parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as unknown
+    if (!isRecord(parsed) || typeof parsed.analyzedAt !== 'string' || typeof parsed.id !== 'string') {
+      throw new InvalidFindingsCursorError()
+    }
+    return { analyzedAt: parsed.analyzedAt, id: parsed.id }
+  } catch (error) {
+    if (error instanceof InvalidFindingsCursorError) throw error
+    throw new InvalidFindingsCursorError()
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

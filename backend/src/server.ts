@@ -1,4 +1,5 @@
 import { buildApp } from './api/app.js'
+import { FindingEventBroker } from './api/finding-events.js'
 import { TransactionAnalyzer } from './analyzer/transaction-analyzer.js'
 import { loadConfig } from './config/env.js'
 import { ResendEmailNotifier } from './notifications/email.js'
@@ -13,12 +14,15 @@ async function start(): Promise<void> {
     trustedDemoTokenAddress: config.trustedDemoTokenAddress,
     demoEventOnlyAddress: config.demoEventOnlyAddress,
   })
+  const store = config.watcher.enabled ? new SqliteFindingStore(config.watcher.databaseUrl) : undefined
+  const findingEvents = new FindingEventBroker()
   const app = await buildApp({
     service,
+    findings: store,
+    events: findingEvents,
     corsOrigins: config.corsOrigins,
     logger: true,
   })
-  const store = config.watcher.enabled ? new SqliteFindingStore(config.watcher.databaseUrl) : undefined
   const notifier = config.email.enabled
     ? new ResendEmailNotifier({
         apiUrl: config.email.apiUrl,
@@ -36,7 +40,10 @@ async function start(): Promise<void> {
         blockRange: config.watcher.blockRange,
         pollIntervalMs: config.watcher.pollIntervalMs,
         onError: (error) => app.log.error({ error }, 'Watcher cycle failed'),
-        onFinding: (finding) => app.log.info({ finding }, 'Watcher stored a monitored transfer finding'),
+        onFinding: (finding) => {
+          findingEvents.publish(finding)
+          app.log.info({ finding }, 'Watcher stored a monitored transfer finding')
+        },
         onAlert: (finding) => app.log.info({ findingId: finding.id }, 'Watcher delivered an email alert'),
       })
     : undefined
