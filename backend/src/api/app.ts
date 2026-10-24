@@ -42,6 +42,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   await app.register(websocket)
   await app.register(cors, {
+    methods: ['GET', 'HEAD', 'POST', 'PUT'],
     origin(origin, callback) {
       if (!origin || allowedOrigins.has(origin)) {
         callback(null, true)
