@@ -16,7 +16,7 @@ Gerçek `DemoToken` transferi ile `DemoEventOnly` olayını analyzer üzerinden 
 - Remote base commit: `f361c99`
 - Initialization commit: `feat: initialize GhostGuard monorepo and frontend` (yerel branch; kesin hash için `git log -1`)
 - Pending PR: yok
-- Remote'a push: yapılmadı
+- Remote'a push: origin/main ve origin/feature/frontend-dashboard dallarına yapıldı (f4805ec)
 - Zincir deployment: yok
 
 ## Son tamamlanan iş

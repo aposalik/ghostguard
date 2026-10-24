@@ -41,7 +41,7 @@
 
 ## Git/TLS notu
 
-Git HTTPS bağlantısı varsayılan çağrıda yerel issuer hatası verdi. TLS doğrulaması kapatılmadı; mevcut güvenilir bundle ile `GIT_SSL_CAINFO="$SSL_CERT_FILE" git ...` kullanıldığında remote okuması ve clone başarılı oldu. Push yapılmadı.
+Git HTTPS bağlantısı varsayılan çağrıda yerel issuer hatası verdi. TLS doğrulaması kapatılmadı; mevcut güvenilir bundle ile `GIT_SSL_CAINFO="$SSL_CERT_FILE" git ...` kullanıldığında remote okuması ve clone başarılı oldu. Remote okuması, clone ve push (origin/main, origin/feature/frontend-dashboard) güvenli TLS trust bundle ile başarıyla tamamlandı.
 
 ## Blocker'lar
 
