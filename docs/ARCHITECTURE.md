@@ -18,7 +18,7 @@ Deterministic Analyzer ── findings ────────┘
 
 ## Uygulama durumu
 
-Receipt/log analyzer gerçek Monad seed işlemleriyle doğrulanmıştır. Finalized-block polling watcher, SQLite checkpoint/findings ve retry edilebilir email transport uygulanmıştır. Gerçek RPC backfill'i kontrollü suspicious event'i transaction hash girdisi olmadan bulmuştur. Public hosting, gerçek inbox delivery ve WebSocket henüz doğrulanmamıştır. Balance-state check uygulanana kadar bu kanıt `UNKNOWN` kalır.
+Receipt/log analyzer gerçek Monad seed işlemleriyle doğrulanmıştır. Finalized-block polling watcher, SQLite checkpoint/findings ve retry edilebilir email transport uygulanmıştır. Gerçek RPC backfill'i kontrollü suspicious event'i transaction hash girdisi olmadan bulmuştur. Dashboard, HTTP API ve WebSocket aynı public Render servisi üzerinde doğrulanmıştır. Balance-state check uygulanana kadar bu kanıt `UNKNOWN` kalır.
 
 ## Bileşen sorumlulukları
 
@@ -78,9 +78,9 @@ Sadece yapılandırılmış finding alanlarını şablonla açıklar. İsteğe b
 
 ## Deployment topolojisi
 
-- Frontend: statik Vite build (ör. Vercel/Netlify).
-- Backend: uzun yaşayan Node.js servisi + kalıcı disk/managed SQLite uyumlu host.
+- Tek Render web service, build sırasında Vite dashboard'u ve Node backend'i üretir.
+- Fastify `/` ve `/assets/*` üzerinden dashboard'u; `/health`, `/api` ve `/api/v1/*` üzerinden backend'i sunar.
+- Frontend production çağrıları aynı origin'i kullanır; WebSocket `wss://<same-host>/api/v1/events` adresine bağlanır.
 - RPC: Monad Testnet endpoint.
-- WebSocket: opsiyonel; MVP'de polling fallback kabul edilir.
-
-Gerçek sağlayıcılar ve URL'ler seçilip doğrulanana kadar bu bölüm tasarım seviyesindedir.
+- Free Render instance ve `/tmp` SQLite ephemeral'dır; restart/spin-down persistence ve always-on izleme garantisi vermez.
+- Public URL: `https://ghostguard-unified.onrender.com`.

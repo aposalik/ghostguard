@@ -2,9 +2,9 @@
 
 **Tarih:** 2026-10-24
 
-**Entegrasyon merge commit'i:** `893e01f` (`main`, PR #9)
+**Unified deployment merge commit'i:** `08c2059` (`main`, PR #12)
 
-**Render deploy:** `dep-dbe9m8vavr4c73a655a0` (`live`)
+**Render deploy:** `dep-dbe9uu0m7kps73d67drg` (`live`)
 
 **Sahiplik:** Fahad frontend; Salik backend/contracts
 
@@ -78,6 +78,15 @@
 - Render servisi artık `main` branch'inden deploy olur ve health check olarak `/health/live` kullanır.
 - Public `GET /` servis bilgisini, `GET /api/v1/findings` gerçek iki persisted finding'i döndürdü; allowed-origin WebSocket handshake başarılı oldu.
 
+### Unified public deployment
+
+- Yeni Render project: `ghostguard-unified`; tek free web service `main` branch'inden deploy olur.
+- Public URL `https://ghostguard-unified.onrender.com`; `/` dashboard HTML, `/api` servis bilgisi sunar.
+- Production frontend aynı-origin HTTP ve WebSocket yollarını kullanır; ayrı frontend/backend CORS bağımlılığı kaldırıldı.
+- Public health chain ID `10143`; iki gerçek finding history'de göründü; gerçek ve event-only transaction'lar doğru sınıflandırıldı.
+- Same-origin public WebSocket handshake başarılı oldu.
+- Yeni serviste email credential transferi ayrıca yetkilendirilmediği için `EMAIL_ENABLED=false`; watcher, analyzer, persistence ve live feed çalışır.
+
 ## Doğrulanan komutlar
 
 2026-10-24:
@@ -107,18 +116,18 @@ Sonuç:
 - 4 test dosyasında 21 test geçti.
 - Backend production build geçti.
 
-Final root `npm run check` geçti: frontend 16 test + backend 38 test, iki workspace için lint/typecheck/build başarılı.
+Final root `npm run check` geçti: frontend 16 test + backend 40 test, iki workspace için lint/typecheck/build başarılı.
 
 ## Kısmi
 
 - Analyzer hem fixture/fake RPC hem gerçek Monad RPC üzerindeki iki seed transaction ile doğrulandı.
 - `TOKEN_STATE_SUPPORTS_CLAIM` bilinçli olarak `UNKNOWN`; balance-delta kanıtı henüz uygulanmadı.
-- Frontend ve backend endpoint şeması kod düzeyinde entegre; public HTTP/WebSocket backend doğrulandı, public frontend URL'si bekleniyor.
+- Frontend ve backend tek public origin üzerinde entegre ve doğrulandı.
 
 ## Henüz yok / blocker
 
-1. Public frontend URL yok.
-2. Public frontend origin'i Render `CORS_ORIGINS` listesine henüz eklenmedi.
+1. Yeni unified serviste Resend email credentials henüz etkin değil.
+2. Önceki ayrı `ghostguard-backend` ve `ghostguard-frontend` servisleri kullanıcı onayı olmadan silinmedi.
 
 ## Git/TLS notu
 
@@ -126,5 +135,5 @@ Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapı
 
 ## Hemen sonraki iş
 
-- Public frontend'i deploy et ve kesin origin'i Render `CORS_ORIGINS` değerine ekle.
-- Public HTTP findings, WebSocket delivery ve dashboard akışını uçtan uca doğrula.
+- Resend ayarlarını yeni unified servise açık onayla aktar veya Render dashboard'dan elle gir.
+- 90 saniyelik demo provası ve backup screenshot/video hazırla.

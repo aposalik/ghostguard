@@ -1,11 +1,11 @@
 # 90 Saniyelik Demo
 
-> Monad Testnet deployment, iki kontrollü seed transaction ve public backend doğrulandı. Public frontend deployment son P0 hosting adımıdır.
+> Monad Testnet deployment, iki kontrollü seed transaction ve tek URL üzerinde public dashboard/backend doğrulandı.
 
 ## Hazırlık kontrolü
 
-- [ ] Public frontend URL harici cihazdan açıldı.
-- [ ] Backend `/health` cevap verdi.
+- [x] Public frontend URL HTTPS üzerinden açıldı.
+- [x] Aynı public host üzerindeki backend `/health` cevap verdi.
 - [x] DemoToken ve DemoEventOnly adresleri RPC'de contract bytecode ile doğrulandı.
 - [x] İki transaction hash'i aynı chain'de doğrulandı.
 - [x] Backend iki hash'i doğru sınıflandırıyor.
@@ -28,8 +28,8 @@ DemoEventOnly transaction hash'ini yapıştır. Event içindeki from/to/amount b
 
 ## Doğrulanacak kanıtlar
 
-- Public app URL: `TBD`
-- Backend URL: `https://ghostguard-backend-kmrj.onrender.com`
+- Public app URL: `https://ghostguard-unified.onrender.com`
+- API info URL: `https://ghostguard-unified.onrender.com/api`
 - Chain ID: `10143`
 - DemoToken address: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`
 - DemoEventOnly address: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`
@@ -43,6 +43,7 @@ DemoEventOnly transaction hash'ini yapıştır. Event içindeki from/to/amount b
 - Event-only işlem aynı Transfer biçimini farklı emitter'dan yayımladı; token balance değiştirmedi ve API `SUSPICIOUS_EVENT` döndürdü.
 - Otomatik watcher, SQLite persistence, duplicate prevention ve Resend email transport uygulanmıştır.
 - Dashboard geçmişi `GET /api/v1/findings`, yeni bulguları `WS /api/v1/events` üzerinden alır.
+- Public dashboard, iki analyze cevabı, persisted findings ve same-origin WebSocket bağlantısı doğrulandı.
 
 ## Backup prosedürü
 
