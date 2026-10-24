@@ -51,3 +51,17 @@ services:
         sync: false
       - key: MONAD_EXPLORER_URL
         value: https://testnet.monadscan.com
+      - key: PRODUCER_ENABLED
+        value: "false"
+      - key: PRODUCER_PRIVATE_KEY
+        sync: false
+      - key: PRODUCER_RECIPIENT_ADDRESS
+        value: 0x07eeAf6BB355fa538eb69Df7A3Fdd6C81E3807fB
+      - key: PRODUCER_TPS
+        value: "1"
+      - key: PRODUCER_MAX_TRANSACTIONS
+        value: "100"
+      - key: PRODUCER_SUSPICIOUS_EVERY
+        value: "10"
+      - key: PRODUCER_AMOUNT_BASE_UNITS
+        value: "1"

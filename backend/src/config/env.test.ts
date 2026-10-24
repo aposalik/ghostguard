@@ -17,6 +17,13 @@ describe('loadConfig', () => {
       trustedDemoTokenAddress: `0x${'ab'.repeat(20)}`,
       demoEventOnlyAddress: `0x${'cd'.repeat(20)}`,
       corsOrigins: ['http://localhost:5173'],
+      producer: {
+        enabled: false,
+        ratePerSecond: 1,
+        maxTransactions: 100,
+        suspiciousEvery: 10,
+        amount: 1n,
+      },
     })
   })
 
@@ -61,5 +68,35 @@ describe('loadConfig', () => {
       confirmations: 7n,
       blockRange: 250n,
     })
+  })
+
+  it('requires a fully monitored and bounded producer configuration', () => {
+    const recipient = `0x${'cd'.repeat(20)}`
+    const base = {
+      MONAD_RPC_URL: 'https://rpc.example.test',
+      WATCH_ENABLED: 'true',
+      MONITORED_WALLET_ADDRESSES: recipient,
+      TRUSTED_DEMO_TOKEN_ADDRESS: `0x${'ab'.repeat(20)}`,
+      DEMO_EVENT_ONLY_ADDRESS: `0x${'ef'.repeat(20)}`,
+      PRODUCER_ENABLED: 'true',
+      PRODUCER_PRIVATE_KEY: `0x${'11'.repeat(32)}`,
+      PRODUCER_RECIPIENT_ADDRESS: recipient,
+      PRODUCER_TPS: '10',
+      PRODUCER_MAX_TRANSACTIONS: '250',
+      PRODUCER_SUSPICIOUS_EVERY: '25',
+      PRODUCER_AMOUNT_BASE_UNITS: '7',
+    }
+
+    expect(loadConfig(base).producer).toMatchObject({
+      enabled: true,
+      recipientAddress: recipient,
+      ratePerSecond: 10,
+      maxTransactions: 250,
+      suspiciousEvery: 25,
+      amount: 7n,
+    })
+    expect(() => loadConfig({ ...base, PRODUCER_TPS: '100' })).toThrow('between 1 and 10')
+    expect(() => loadConfig({ ...base, MONITORED_WALLET_ADDRESSES: `0x${'aa'.repeat(20)}` }))
+      .toThrow('PRODUCER_RECIPIENT_ADDRESS must be included')
   })
 })

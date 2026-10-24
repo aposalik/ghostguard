@@ -1,5 +1,4 @@
 import type { Classification, SecurityFinding } from '@ghostguard/shared'
-import { SCENARIO_A_LEGITIMATE, SCENARIO_B_SPOOFED } from '../data/demoScenarios'
 import type { StreamStatus } from '../hooks/useLiveEvents'
 import { formatTimeAgo, shortenHex } from '../utils/format'
 
@@ -8,7 +7,6 @@ interface LiveMonitorPanelProps {
   selectedFindingId: string | null
   streamStatus?: StreamStatus
   onSelectFinding: (finding: SecurityFinding) => void
-  onSimulateEvent?: (finding: SecurityFinding) => void
 }
 
 const statusToneMap: Record<Classification, { label: string; tone: string; icon: string }> = {
@@ -24,7 +22,6 @@ export function LiveMonitorPanel({
   selectedFindingId,
   streamStatus = 'disconnected',
   onSelectFinding,
-  onSimulateEvent,
 }: LiveMonitorPanelProps) {
   function renderStreamBadge() {
     switch (streamStatus) {
@@ -51,7 +48,7 @@ export function LiveMonitorPanel({
         )
       default:
         return (
-          <span className="stream-badge badge-offline" title="WebSocket disconnected. Simulation mode active.">
+          <span className="stream-badge badge-offline" title="WebSocket disconnected. Reconnection is automatic.">
             <span className="status-dot dot-faint" aria-hidden="true" />
             <span>Monad Feed</span>
           </span>
@@ -79,7 +76,7 @@ export function LiveMonitorPanel({
 
         {findings.length === 0 ? (
           <div className="monitor-empty">
-            No events indexed yet. Inspect a transaction or run a judge demo preset above to populate the live monitor.
+            No real monitored transfer events have been indexed yet.
           </div>
         ) : (
           <div className="monitor-feed-list" role="feed" aria-label="Recent security findings">
@@ -132,45 +129,6 @@ export function LiveMonitorPanel({
                 </div>
               )
             })}
-          </div>
-        )}
-
-        {/* Real-time simulation triggers for judges */}
-        {onSimulateEvent && (
-          <div className="monitor-simulation-footer">
-            <span className="simulation-footer-label">Demo Realtime Event Trigger:</span>
-            <div className="simulation-footer-btns">
-              <button
-                type="button"
-                className="trigger-pill trigger-legit"
-                onClick={() => {
-                  const sampleFinding: SecurityFinding = {
-                    ...SCENARIO_A_LEGITIMATE.response.findings[0]!,
-                    id: `10143:${SCENARIO_A_LEGITIMATE.transactionHash}:${Date.now()}`,
-                    analyzedAt: new Date().toISOString(),
-                  }
-                  onSimulateEvent(sampleFinding)
-                }}
-                title="Simulate incoming legitimate DemoToken transfer event"
-              >
-                <span>+ Real Transfer</span>
-              </button>
-              <button
-                type="button"
-                className="trigger-pill trigger-spoofed"
-                onClick={() => {
-                  const sampleFinding: SecurityFinding = {
-                    ...SCENARIO_B_SPOOFED.response.findings[0]!,
-                    id: `10143:${SCENARIO_B_SPOOFED.transactionHash}:${Date.now()}`,
-                    analyzedAt: new Date().toISOString(),
-                  }
-                  onSimulateEvent(sampleFinding)
-                }}
-                title="Simulate incoming spoofed decoy event"
-              >
-                <span>+ Spoofed Decoy</span>
-              </button>
-            </div>
           </div>
         )}
       </div>

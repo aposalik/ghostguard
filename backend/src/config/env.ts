@@ -27,6 +27,15 @@ export interface BackendConfig {
     to?: string
     explorerUrl: string
   }
+  producer: {
+    enabled: boolean
+    privateKey?: `0x${string}`
+    recipientAddress?: HexAddress
+    ratePerSecond: number
+    maxTransactions: number
+    suspiciousEvery: number
+    amount: bigint
+  }
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig {
@@ -58,6 +67,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
       to: optionalString(env.ALERT_EMAIL_TO),
       explorerUrl: requiredUrl(env.MONAD_EXPLORER_URL ?? 'https://testnet.monadscan.com', 'MONAD_EXPLORER_URL'),
     },
+    producer: {
+      enabled: booleanValue(env.PRODUCER_ENABLED, false, 'PRODUCER_ENABLED'),
+      privateKey: optionalPrivateKey(env.PRODUCER_PRIVATE_KEY, 'PRODUCER_PRIVATE_KEY'),
+      recipientAddress: optionalAddress(env.PRODUCER_RECIPIENT_ADDRESS, 'PRODUCER_RECIPIENT_ADDRESS'),
+      ratePerSecond: integerInRange(env.PRODUCER_TPS, 1, 1, 10, 'PRODUCER_TPS'),
+      maxTransactions: integerInRange(env.PRODUCER_MAX_TRANSACTIONS, 100, 1, 10_000, 'PRODUCER_MAX_TRANSACTIONS'),
+      suspiciousEvery: integerInRange(env.PRODUCER_SUSPICIOUS_EVERY, 10, 2, 1_000, 'PRODUCER_SUSPICIOUS_EVERY'),
+      amount: positiveBigInt(env.PRODUCER_AMOUNT_BASE_UNITS, 1n, 'PRODUCER_AMOUNT_BASE_UNITS'),
+    },
   }
 
   if (config.watcher.enabled && config.watcher.monitoredWallets.length === 0) {
@@ -68,6 +86,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
   }
   if (config.email.enabled && !config.watcher.enabled) {
     throw new Error('WATCH_ENABLED must be true when EMAIL_ENABLED=true.')
+  }
+  if (config.producer.enabled) {
+    if (!config.producer.privateKey || !config.producer.recipientAddress) {
+      throw new Error('PRODUCER_PRIVATE_KEY and PRODUCER_RECIPIENT_ADDRESS are required when PRODUCER_ENABLED=true.')
+    }
+    if (!config.trustedDemoTokenAddress || !config.demoEventOnlyAddress) {
+      throw new Error('TRUSTED_DEMO_TOKEN_ADDRESS and DEMO_EVENT_ONLY_ADDRESS are required when PRODUCER_ENABLED=true.')
+    }
+    if (!config.watcher.enabled) {
+      throw new Error('WATCH_ENABLED must be true when PRODUCER_ENABLED=true.')
+    }
+    if (!config.watcher.monitoredWallets.includes(config.producer.recipientAddress)) {
+      throw new Error('PRODUCER_RECIPIENT_ADDRESS must be included in MONITORED_WALLET_ADDRESSES.')
+    }
   }
 
   return config
@@ -130,6 +162,12 @@ function booleanValue(raw: string | undefined, fallback: boolean, name: string):
 
 function optionalString(raw: string | undefined): string | undefined {
   return raw?.trim() || undefined
+}
+
+function optionalPrivateKey(value: string | undefined, name: string): `0x${string}` | undefined {
+  if (!value?.trim()) return undefined
+  if (!/^0x[a-fA-F0-9]{64}$/.test(value)) throw new Error(`${name} must be a 32-byte hex private key.`)
+  return value as `0x${string}`
 }
 
 function optionalUnsignedBigInt(raw: string | undefined, name: string): bigint | undefined {

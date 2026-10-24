@@ -3,6 +3,7 @@ import fastifyStatic from '@fastify/static'
 import websocket from '@fastify/websocket'
 import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify'
 import type {
+  AgentStatusResponse,
   AnalyzeTransactionRequest,
   ApiErrorResponse,
   HexAddress,
@@ -24,6 +25,7 @@ export interface BuildAppOptions {
   corsOrigins?: string[]
   frontendDirectory?: string
   logger?: boolean
+  agentStatus?: () => AgentStatusResponse
 }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
@@ -54,6 +56,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       health: '/health',
       analyze: '/api/v1/transactions/analyze',
       findings: '/api/v1/findings',
+      agents: '/api/v1/agents/status',
       events: '/api/v1/events',
     },
   }
@@ -76,6 +79,36 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   })
 
   app.get('/health/live', async () => ({ status: 'ok' }))
+
+  app.get('/api/v1/agents/status', async () => options.agentStatus?.() ?? {
+    producer: {
+      enabled: false,
+      state: 'disabled',
+      ratePerSecond: 0,
+      maxTransactions: 0,
+      suspiciousEvery: 0,
+      submitted: 0,
+      normalSubmitted: 0,
+      suspiciousSubmitted: 0,
+      failed: 0,
+      lastTransactionHash: null,
+      lastActivityAt: null,
+      lastError: null,
+    },
+    detector: {
+      enabled: false,
+      state: 'disabled',
+      emailNotificationsEnabled: false,
+      monitoredWalletCount: 0,
+      pollIntervalMs: 0,
+      cyclesCompleted: 0,
+      logsObserved: 0,
+      findingsStored: 0,
+      alertsDelivered: 0,
+      lastActivityAt: null,
+      lastError: null,
+    },
+  })
 
   app.get('/api/v1/findings', async (request, reply) => {
     const parsed = parseFindingsQuery(request.query)

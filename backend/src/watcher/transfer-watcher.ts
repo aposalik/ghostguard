@@ -1,6 +1,6 @@
 import type { AnalysisService } from '../analyzer/transaction-analyzer.js'
 import { TRANSFER_TOPIC } from '../analyzer/transaction-analyzer.js'
-import type { HexAddress, SecurityFinding, TransactionHash } from '@ghostguard/shared'
+import type { DetectorAgentStatus, HexAddress, SecurityFinding, TransactionHash } from '@ghostguard/shared'
 import type { AlertNotifier } from '../notifications/email.js'
 import type { FindingStore } from './store.js'
 import type { RpcFilterLog, WatchRpc } from './rpc.js'
@@ -27,6 +27,7 @@ export class TransferWatcher {
   private timer?: NodeJS.Timeout
   private activeRun?: Promise<void>
   private stopped = true
+  private status: DetectorAgentStatus
 
   constructor(
     rpc: WatchRpc,
@@ -44,14 +45,33 @@ export class TransferWatcher {
     this.options = options
     this.monitored = new Set(options.monitoredWallets.map((address) => address.toLowerCase()))
     this.streamKey = `transfer:${[...this.monitored].sort().join(',')}`
+    this.status = {
+      enabled: true,
+      state: 'stopped',
+      emailNotificationsEnabled: Boolean(notifier),
+      monitoredWalletCount: this.monitored.size,
+      pollIntervalMs: options.pollIntervalMs,
+      cyclesCompleted: 0,
+      logsObserved: 0,
+      findingsStored: 0,
+      alertsDelivered: 0,
+      lastActivityAt: null,
+      lastError: null,
+    }
   }
 
   start(): void {
     if (this.timer || this.activeRun) return
     this.stopped = false
+    this.status.state = 'running'
     const tick = () => {
       this.activeRun = this.runOnce()
-        .catch((error: unknown) => this.options.onError?.(error))
+        .catch((error: unknown) => {
+          this.status.state = 'error'
+          this.status.lastError = 'Detector cycle failed; it will retry automatically.'
+          this.status.lastActivityAt = new Date().toISOString()
+          this.options.onError?.(error)
+        })
         .finally(() => {
           this.activeRun = undefined
           if (!this.stopped) this.timer = setTimeout(tick, this.options.pollIntervalMs)
@@ -65,6 +85,11 @@ export class TransferWatcher {
     if (this.timer) clearTimeout(this.timer)
     this.timer = undefined
     await this.activeRun
+    this.status.state = 'stopped'
+  }
+
+  getStatus(): DetectorAgentStatus {
+    return { ...this.status }
   }
 
   async runOnce(): Promise<void> {
@@ -84,6 +109,10 @@ export class TransferWatcher {
     }
 
     await this.dispatchPendingAlerts()
+    this.status.cyclesCompleted += 1
+    this.status.lastActivityAt = new Date().toISOString()
+    this.status.lastError = null
+    this.status.state = 'running'
   }
 
   private async getWatchedLogs(fromBlock: bigint, toBlock: bigint): Promise<RpcFilterLog[]> {
@@ -96,6 +125,7 @@ export class TransferWatcher {
     for (const log of [...sent, ...received]) {
       unique.set(`${log.transactionHash.toLowerCase()}:${BigInt(log.logIndex).toString(10)}`, log)
     }
+    this.status.logsObserved += unique.size
     return [...unique.values()]
   }
 
@@ -105,6 +135,7 @@ export class TransferWatcher {
       const response = await this.analyzer.analyze({ transactionHash: transactionHash as TransactionHash })
       for (const finding of response.findings) {
         if (this.referencesMonitoredWallet(finding) && this.store.saveFinding(finding)) {
+          this.status.findingsStored += 1
           this.options.onFinding?.(finding)
         }
       }
@@ -123,11 +154,28 @@ export class TransferWatcher {
       try {
         await this.notifier.send(finding)
         this.store.markAlerted(finding.id, new Date().toISOString())
+        this.status.alertsDelivered += 1
         this.options.onAlert?.(finding)
       } catch (error) {
         this.options.onError?.(error)
       }
     }
+  }
+}
+
+export function disabledDetectorStatus(): DetectorAgentStatus {
+  return {
+    enabled: false,
+    state: 'disabled',
+    emailNotificationsEnabled: false,
+    monitoredWalletCount: 0,
+    pollIntervalMs: 0,
+    cyclesCompleted: 0,
+    logsObserved: 0,
+    findingsStored: 0,
+    alertsDelivered: 0,
+    lastActivityAt: null,
+    lastError: null,
   }
 }
 

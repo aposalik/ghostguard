@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import type { TransactionHash } from '@ghostguard/shared'
-import { SCENARIO_A_LEGITIMATE, SCENARIO_B_SPOOFED } from '../data/demoScenarios'
 import { isTransactionHash } from '../services/api'
 
 interface TransactionSearchProps {
@@ -12,7 +11,6 @@ interface TransactionSearchProps {
 export function TransactionSearch({ isLoading, onSubmit, currentHash }: TransactionSearchProps) {
   const [value, setValue] = useState(currentHash ?? '')
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [activePreset, setActivePreset] = useState<string | null>(null)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -24,14 +22,6 @@ export function TransactionSearch({ isLoading, onSubmit, currentHash }: Transact
     }
 
     setValidationError(null)
-    setActivePreset(null)
-    onSubmit(hash)
-  }
-
-  function handleSelectPreset(scenarioId: string, hash: TransactionHash) {
-    setValue(hash)
-    setValidationError(null)
-    setActivePreset(scenarioId)
     onSubmit(hash)
   }
 
@@ -50,10 +40,9 @@ export function TransactionSearch({ isLoading, onSubmit, currentHash }: Transact
             value={value}
             onChange={(event) => {
               setValue(event.target.value)
-              setActivePreset(null)
               if (validationError) setValidationError(null)
             }}
-            placeholder="0x — paste a Monad transaction hash or choose a demo preset below"
+            placeholder="0x — paste a real Monad Testnet transaction hash"
             autoComplete="off"
             spellCheck={false}
             aria-invalid={Boolean(validationError)}
@@ -65,7 +54,6 @@ export function TransactionSearch({ isLoading, onSubmit, currentHash }: Transact
               className="search-clear-btn"
               onClick={() => {
                 setValue('')
-                setActivePreset(null)
                 setValidationError(null)
               }}
               aria-label="Clear transaction hash"
@@ -87,40 +75,6 @@ export function TransactionSearch({ isLoading, onSubmit, currentHash }: Transact
           {validationError}
         </p>
       )}
-
-      {/* 90-Second Judge Demo Preset Switcher */}
-      <div className="preset-bar" aria-label="Demo scenario presets">
-        <div className="preset-bar-header">
-          <span className="preset-title">⚡ 90-Second Judge Presets:</span>
-          <span className="preset-subtitle">Instant on-chain evidence comparison</span>
-        </div>
-        <div className="preset-buttons">
-          <button
-            type="button"
-            className={`preset-pill preset-pill-legit ${activePreset === 'scenario-a' ? 'is-active' : ''}`}
-            onClick={() => handleSelectPreset('scenario-a', SCENARIO_A_LEGITIMATE.transactionHash)}
-            disabled={isLoading}
-            title={SCENARIO_A_LEGITIMATE.description}
-          >
-            <span className="preset-dot dot-verified" />
-            <span className="preset-label">Scenario A: Legitimate Transfer</span>
-            <span className="preset-tag">Verified</span>
-          </button>
-
-          <button
-            type="button"
-            className={`preset-pill preset-pill-spoofed ${activePreset === 'scenario-b' ? 'is-active' : ''}`}
-            onClick={() => handleSelectPreset('scenario-b', SCENARIO_B_SPOOFED.transactionHash)}
-            disabled={isLoading}
-            title={SCENARIO_B_SPOOFED.description}
-          >
-            <span className="preset-dot dot-warning" />
-            <span className="preset-label">Scenario B: Spoofed Decoy</span>
-            <span className="preset-tag tag-hazard">Emitter Mismatch</span>
-          </button>
-
-        </div>
-      </div>
     </div>
   )
 }

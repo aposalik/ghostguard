@@ -260,85 +260,27 @@
     background: rgba(110, 84, 255, 0.1);
   }
 
-  /* ==========================================================================
-     Simulation Mode Amber Banner
-     ========================================================================== */
-  .simulation-banner {
+  .backend-status-banner {
     position: relative;
     z-index: 9;
-    border-bottom: 1px solid rgba(255, 174, 69, 0.35);
-    background: linear-gradient(90deg, rgba(255, 174, 69, 0.15) 0%, rgba(14, 9, 28, 0.95) 50%, rgba(255, 174, 69, 0.12) 100%);
-    backdrop-filter: blur(12px);
-  }
-
-  .simulation-banner-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    width: min(1200px, calc(100% - 48px));
+    justify-content: center;
+    gap: 16px;
     min-height: 44px;
-    padding-block: 8px;
-    margin-inline: auto;
-  }
-
-  .simulation-banner-left {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .simulation-pulse-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--monad-amber);
-    box-shadow: 0 0 10px var(--monad-amber);
-    animation: pulse-ring 2s infinite;
-  }
-
-  .simulation-title {
-    color: var(--monad-amber);
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  .simulation-detail {
-    color: var(--text-secondary);
-    font-size: 0.76rem;
-  }
-
-  .simulation-banner-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .simulation-action-btn,
-  .simulation-toggle-btn {
-    padding: 4px 10px;
-    border: 1px solid rgba(255, 174, 69, 0.3);
-    border-radius: 6px;
-    background: rgba(255, 174, 69, 0.1);
+    padding: 8px 20px;
+    border-bottom: 1px solid rgba(255, 51, 102, 0.4);
     color: var(--text-primary);
-    font-family: ui-monospace, "Roboto Mono", monospace;
-    font-size: 0.68rem;
-    font-weight: 600;
-    transition: background 0.15s, border-color 0.15s;
+    background: rgba(69, 12, 37, 0.92);
+    font-size: 0.8rem;
   }
 
-  .simulation-action-btn:hover {
-    background: rgba(255, 174, 69, 0.22);
-    border-color: var(--monad-amber);
-  }
-
-  .simulation-toggle-btn.is-active {
-    border-color: var(--monad-amber);
-    background: rgba(255, 174, 69, 0.25);
+  .backend-status-banner button {
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
     color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
   }
 
   /* ==========================================================================
@@ -487,7 +429,7 @@
   }
 
   /* ==========================================================================
-     Search & 90-Second Judge Presets
+     Live Transaction Search
      ========================================================================== */
   .search-container {
     margin-top: 32px;
@@ -593,116 +535,6 @@
     color: var(--monad-hazard);
     font-size: 0.8rem;
     font-weight: 500;
-  }
-
-  /* 90-Second Judge Demo Presets Bar */
-  .preset-bar {
-    margin-top: 18px;
-    padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: rgba(19, 14, 38, 0.65);
-    backdrop-filter: blur(16px);
-  }
-
-  .preset-bar-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .preset-title {
-    color: var(--monad-cyan);
-    font-family: ui-monospace, "Roboto Mono", monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  .preset-subtitle {
-    color: var(--text-faint);
-    font-size: 0.74rem;
-  }
-
-  .preset-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .preset-pill {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 9px 14px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text-secondary);
-    background: rgba(24, 18, 48, 0.85);
-    font-size: 0.78rem;
-    font-weight: 600;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .preset-pill:hover:not(:disabled) {
-    transform: translateY(-2px);
-    border-color: var(--monad-purple-bright);
-    color: var(--text-primary);
-    box-shadow: 0 4px 16px rgba(110, 84, 255, 0.25);
-  }
-
-  .preset-pill.is-active {
-    border-color: var(--monad-purple-bright);
-    background: rgba(110, 84, 255, 0.22);
-    color: #ffffff;
-    box-shadow: 0 0 20px var(--monad-purple-glow);
-  }
-
-  .preset-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-
-  .dot-verified {
-    background: var(--monad-emerald);
-    box-shadow: 0 0 8px var(--monad-emerald);
-  }
-
-  .dot-warning {
-    background: var(--monad-hazard);
-    box-shadow: 0 0 8px var(--monad-hazard);
-  }
-
-  .dot-review {
-    background: var(--monad-amber);
-    box-shadow: 0 0 8px var(--monad-amber);
-  }
-
-  .preset-tag {
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-family: ui-monospace, "Roboto Mono", monospace;
-    font-size: 0.64rem;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-
-  .preset-pill-legit .preset-tag {
-    color: var(--monad-emerald);
-    background: var(--monad-emerald-wash);
-  }
-
-  .preset-pill-spoofed .preset-tag {
-    color: var(--monad-hazard);
-    background: var(--monad-hazard-wash);
-  }
-
-  .preset-pill-review .preset-tag {
-    color: var(--monad-amber);
-    background: var(--monad-amber-wash);
   }
 
   .hero-proof {
@@ -1802,68 +1634,97 @@
     background: var(--text-faint);
   }
 
-  /* Monitor Simulation Footer */
-  .monitor-simulation-footer {
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--line);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .simulation-footer-label {
-    color: var(--text-muted);
+  .agent-api-state {
+    color: var(--monad-emerald);
     font-family: ui-monospace, "Roboto Mono", monospace;
     font-size: 0.66rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
     text-transform: uppercase;
   }
 
-  .simulation-footer-btns {
-    display: flex;
-    gap: 8px;
-  }
-
-  .trigger-pill {
-    flex: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-family: ui-monospace, "Roboto Mono", monospace;
-    font-size: 0.72rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .trigger-legit {
-    color: var(--monad-emerald);
-    background: rgba(0, 229, 153, 0.1);
-    border: 1px solid rgba(0, 229, 153, 0.3);
-  }
-
-  .trigger-legit:hover {
-    background: rgba(0, 229, 153, 0.2);
-    border-color: var(--monad-emerald);
-    box-shadow: 0 0 12px rgba(0, 229, 153, 0.25);
-    transform: translateY(-1px);
-  }
-
-  .trigger-spoofed {
+  .agent-api-state.is-error,
+  .agent-error {
     color: var(--monad-hazard);
-    background: rgba(255, 51, 102, 0.1);
-    border: 1px solid rgba(255, 51, 102, 0.3);
   }
 
-  .trigger-spoofed:hover {
-    background: rgba(255, 51, 102, 0.2);
-    border-color: var(--monad-hazard);
-    box-shadow: 0 0 12px rgba(255, 51, 102, 0.3);
-    transform: translateY(-1px);
+  .agent-status-grid {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .agent-card {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(18, 13, 36, 0.7);
+  }
+
+  .agent-heading {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .agent-number {
+    color: var(--monad-cyan);
+    font-family: ui-monospace, "Roboto Mono", monospace;
+    font-size: 0.7rem;
+  }
+
+  .agent-state {
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: ui-monospace, "Roboto Mono", monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+  }
+
+  .agent-state.state-running {
+    border-color: rgba(0, 229, 153, 0.35);
+    color: var(--monad-emerald);
+    background: var(--monad-emerald-wash);
+  }
+
+  .agent-state.state-error {
+    border-color: rgba(255, 51, 102, 0.35);
+    color: var(--monad-hazard);
+    background: var(--monad-hazard-wash);
+  }
+
+  .agent-card > p {
+    margin: 10px 0;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    line-height: 1.5;
+  }
+
+  .agent-card dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+  }
+
+  .agent-card dl > div {
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(110, 84, 255, 0.08);
+  }
+
+  .agent-card dt {
+    color: var(--text-faint);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+  }
+
+  .agent-card dd {
+    margin: 3px 0 0;
+    color: var(--text-primary);
+    font-family: ui-monospace, "Roboto Mono", monospace;
+    font-size: 0.76rem;
   }
 
   /* Live Realtime Notification Toast */
@@ -2210,15 +2071,6 @@
     min-height: 48px;
   }
 
-  .preset-buttons {
-    flex-direction: column;
-  }
-
-  .preset-pill {
-    width: 100%;
-    justify-content: space-between;
-  }
-
   .sidebar-stack {
     grid-template-columns: 1fr;
   }
@@ -2283,15 +2135,6 @@
     font-size: 0.78rem;
   }
 
-  .preset-bar {
-    padding: 12px;
-  }
-
-  .preset-pill {
-    padding: 8px 10px;
-    font-size: 0.74rem;
-  }
-
   .analysis-body,
   .monitor-body {
     padding: 16px;
@@ -2299,16 +2142,6 @@
 
   .side-address {
     font-size: 0.7rem;
-  }
-
-  .simulation-banner-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .simulation-banner-actions {
-    width: 100%;
-    justify-content: space-between;
   }
 
   .live-toast-container {
@@ -2363,13 +2196,6 @@
   .search-button {
     min-height: 44px;
     font-size: 0.78rem;
-  }
-
-  .preset-label {
-    max-width: 170px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .analysis-body {

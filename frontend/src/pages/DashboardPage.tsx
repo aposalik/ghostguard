@@ -1,10 +1,11 @@
 import { AnalysisPanel } from '../components/AnalysisPanel'
+import { AgentStatusPanel } from '../components/AgentStatusPanel'
 import { AppHeader } from '../components/AppHeader'
 import { ArchitecturePanel } from '../components/ArchitecturePanel'
+import { BackendStatusBanner } from '../components/BackendStatusBanner'
 import { LiveMonitorPanel } from '../components/LiveMonitorPanel'
 import { LiveToast } from '../components/LiveToast'
 import { Monad3DScene } from '../components/Monad3DScene'
-import { OfflineSimulationBanner } from '../components/OfflineSimulationBanner'
 import { TransactionSearch } from '../components/TransactionSearch'
 import { useLiveEvents } from '../hooks/useLiveEvents'
 import { useTransactionAnalysis } from '../hooks/useTransactionAnalysis'
@@ -19,10 +20,8 @@ export function DashboardPage() {
     <div className="app-shell">
       <AppHeader />
 
-      <OfflineSimulationBanner
-        isSimulationActive={analysis.isSimulationActive}
+      <BackendStatusBanner
         isBackendOnline={analysis.isBackendOnline}
-        onToggleSimulation={analysis.toggleSimulationMode}
         onCheckBackend={analysis.probeHealth}
       />
 
@@ -83,8 +82,8 @@ export function DashboardPage() {
                 selectedFindingId={analysis.selectedFindingId}
                 streamStatus={liveEvents.status}
                 onSelectFinding={analysis.selectFinding}
-                onSimulateEvent={liveEvents.simulateFinding}
               />
+              <AgentStatusPanel />
               <ArchitecturePanel />
             </aside>
           </div>
