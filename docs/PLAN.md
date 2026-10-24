@@ -101,7 +101,7 @@ Tamamlanan ilk dilim:
 - B2'yi B3'ün gerçek adres/hash'leriyle integration test et.
 - Render/Railway/Fly.io benzeri long-running hostta HTTPS backend.
 - Fahad'ın kesin frontend origin'ini CORS allowlist'e ekle.
-- Render Blueprint, persistent disk config ve RPC-independent `/health/live` hazır; external Render service creation bekliyor.
+- Render Blueprint ücretsiz web service ve RPC-independent `/health/live` için hazır; ücretsiz planda SQLite verisi ephemeral ve watcher uyku sırasında durur.
 - **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır.
 
 ### B5 — Persistence, watcher ve notifications (P1, `IN PROGRESS`)

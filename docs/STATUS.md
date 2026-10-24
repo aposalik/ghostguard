@@ -66,8 +66,8 @@
 
 ### Public backend hazırlığı
 
-- Railway signup geçici olarak kapalı olduğu için hedef Render web service + persistent disk olarak değiştirildi.
-- Root `render.yaml` monorepo build/start komutlarını, Frankfurt region'ı, tek instance'ı, `/var/data` SQLite volume'unu ve secret prompt'larını tanımlar.
+- Railway signup geçici olarak kapalı olduğu için hedef Render web service olarak değiştirildi.
+- Kullanıcının sıfır maliyet tercihi nedeniyle root `render.yaml` ücretsiz planı, ephemeral `/tmp/ghostguard.db` SQLite yolunu ve secret prompt'larını tanımlar; restart/spin-down veriyi silebilir ve watcher'ı durdurabilir.
 - RPC'den bağımsız `GET /health/live` endpoint'i hosting liveness probe'u için eklendi.
 - Root check 31 backend + 3 frontend test ile geçti; actual Render service henüz oluşturulmadı.
 

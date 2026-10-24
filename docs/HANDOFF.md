@@ -66,7 +66,7 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 ## Public backend deployment hazırlığı
 
 - Railway signup kapalı olduğu için Render seçildi.
-- `render.yaml` paid Node web service, Frankfurt region, `/var/data` persistent disk, public config ve dashboard-entered secrets içerir.
+- `render.yaml` ücretsiz Node web service, Frankfurt region, ephemeral `/tmp/ghostguard.db`, public config ve dashboard-entered secrets içerir. Ücretsiz host restart/spin-down durumunda SQLite verisi kaybolabilir ve watcher durur.
 - `/health/live` RPC-independent liveness endpoint'i eklendi ve testlidir.
 - Render service/account oluşturma ve public URL doğrulaması henüz yapılmadı.
 
