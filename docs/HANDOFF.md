@@ -52,9 +52,9 @@ Headless Chrome ile desktop ve 500 px responsive screenshot'ları görsel olarak
 
 ## Sonraki üç görev
 
-1. **Developer B:** Foundry ile `DemoToken` ve `DemoEventOnly` testlerini yazıp sözleşmeleri implement et.
-2. **Developer B:** Fixture tabanlı analyzer + `POST /api/v1/transactions/analyze` endpoint'ini ortak tiplere göre oluştur.
-3. **Developer A:** Endpoint hazır olduğunda gerçek response entegrasyonunu test et ve public frontend deployment yap.
+1. **Salik (Developer B):** Foundry ile `DemoToken` ve `DemoEventOnly` testlerini yazıp sözleşmeleri implement et ve testnet'e deploy et.
+2. **Salik (Developer B):** Fixture tabanlı analyzer + `POST /api/v1/transactions/analyze` endpoint'ini ortak tiplere göre oluştur.
+3. **Fahad (Developer A):** GitHub issues üzerinden Faz F1 (Quick Demo Switcher & Live Monitor) ve Faz F2 (API entegrasyonu + fallback resilience) geliştir; ardından Vercel üzerinde public frontend deployment yap.
 
 ## Resume protokolü
 
