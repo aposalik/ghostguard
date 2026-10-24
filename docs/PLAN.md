@@ -28,7 +28,7 @@ Kritik yol: **B1 + B2 → B3 → B4 → F2 final doğrulama → F3 → demo prov
 
 ## Fahad — Frontend
 
-### F1 — Kanıt UI ve Quick Demo Switcher (P0, `IN PROGRESS`)
+### F1 — Kanıt UI ve Quick Demo Switcher (P0, `DONE`)
 
 - Classification rozetleri, emitter/expected address ve explorer linklerini görünür yap.
 - İki Quick Demo butonunu env/config üzerinden gelecek gerçek tx hash'lerine bağlanmaya hazırla.
@@ -37,7 +37,7 @@ Kritik yol: **B1 + B2 → B3 → B4 → F2 final doğrulama → F3 → demo prov
 
 > Geçmiş analiz listesi ve sürekli live monitor, backend persistence/WebSocket'e bağlı olduğu için P1/F4 kapsamındadır; P0 kabul kriterini bloke etmez.
 
-### F2 — API entegrasyonu ve hata yönetimi (P0, `IN PROGRESS`)
+### F2 — API entegrasyonu ve hata yönetimi (P0, `DONE`)
 
 - `GET /health` ve `POST /api/v1/transactions/analyze` entegrasyonu.
 - 400/404/503 hata şekillerini güvenli ve anlaşılır göster.
@@ -52,10 +52,11 @@ Kritik yol: **B1 + B2 → B3 → B4 → F2 final doğrulama → F3 → demo prov
 - `npm run check` sıfır hata.
 - **Kabul:** Harici cihazdan HTTPS URL açılır ve public backend'e erişir.
 
-### F4 — Findings feed, WebSocket ve bildirimler (P1, `TODO`)
+### F4 — Findings feed, WebSocket ve bildirimler (P1, `DONE`)
 
 - `GET /api/v1/findings` ve `WS /api/v1/events`.
 - Reconnect/backoff ve HTTP recovery.
+- Gerçek iki testnet transaction'ı recorded fallback olarak açık etiketle gösterilir; varsayılan akış live API'dir.
 
 ---
 
@@ -105,14 +106,15 @@ Tamamlanan ilk dilim:
 - Public frontend URL oluştuğunda mevcut localhost CORS origin'i genişletilecek. Ücretsiz planda SQLite verisi ephemeral ve watcher uyku sırasında durur.
 - **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır. **PASSED**
 
-### B5 — Persistence, watcher ve notifications (P1, `IN PROGRESS`)
+### B5 — Persistence, watcher ve notifications (P1, `DONE`)
 
 - SQLite findings + checkpoint. **DONE**
 - Idempotent `chainId:txHash:logIndex` kayıtları. **DONE**
 - Finalized-block polling, bounded range backfill ve restart recovery. **DONE**
 - Monitored wallet için indexed `from`/`to` topic taraması. **DONE**
 - `SUSPICIOUS_EVENT`/`NEEDS_REVIEW` email transport, template ve retry queue. **DONE; live Resend API acceptance doğrulandı**
-- `GET /api/v1/findings` ve `WS /api/v1/events`.
+- `GET /api/v1/findings` opaque cursor pagination. **DONE**
+- `WS /api/v1/events` yeni finding delivery ve CORS-origin kontrolü. **DONE**
 
 ---
 
@@ -125,7 +127,7 @@ Tamamlanan ilk dilim:
 | Demo sözleşmeleri | Salik | Foundry | DONE | `forge fmt --check`; 3 Foundry testi geçti |
 | Fixture analyzer/API | Salik | Ortak tipler | DONE | 21 test + iki gerçek tx API doğrulaması |
 | Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
-| Quick Demo + final API UI | Fahad | B2/B3 | IN PROGRESS | Gerçek hashlerle UI |
+| Quick Demo + final API UI | Fahad | B2/B3 | DONE | Gerçek hashler + live/recorded ayrımı |
 | Public backend | Salik | B2/B3 | DONE | Free Render service live; health + iki gerçek analyze doğrulandı |
 | Public frontend | Fahad | B4 | TODO | HTTPS UI |
 | 90 saniyelik demo | Ortak | Tüm P0 | TODO | İki tx doğru ayrılır |

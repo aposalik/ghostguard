@@ -1,6 +1,6 @@
 # 90 Saniyelik Demo
 
-> Monad Testnet deployment ve iki kontrollü seed transaction RPC üzerinden doğrulandı. Public hosting henüz tamamlanmadı.
+> Monad Testnet deployment, iki kontrollü seed transaction ve public backend doğrulandı. Public frontend deployment son P0 hosting adımıdır.
 
 ## Hazırlık kontrolü
 
@@ -9,7 +9,7 @@
 - [x] DemoToken ve DemoEventOnly adresleri RPC'de contract bytecode ile doğrulandı.
 - [x] İki transaction hash'i aynı chain'de doğrulandı.
 - [x] Backend iki hash'i doğru sınıflandırıyor.
-- [ ] Dashboard iki hash'i önceden analiz edebiliyor.
+- [x] Dashboard iki gerçek hash'i live API veya açık etiketli recorded response ile gösterebiliyor.
 - [ ] Backup ekran kaydı/screenshot gerçek sonuçlarla hazırlandı.
 
 ## Akış
@@ -29,7 +29,7 @@ DemoEventOnly transaction hash'ini yapıştır. Event içindeki from/to/amount b
 ## Doğrulanacak kanıtlar
 
 - Public app URL: `TBD`
-- Backend URL: `TBD`
+- Backend URL: `https://ghostguard-backend-kmrj.onrender.com`
 - Chain ID: `10143`
 - DemoToken address: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`
 - DemoEventOnly address: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`
@@ -41,7 +41,8 @@ DemoEventOnly transaction hash'ini yapıştır. Event içindeki from/to/amount b
 - Dört deployment/seed receipt'i başarılıdır.
 - Gerçek transfer recipient balance'ını `25 GGD` artırdı ve API `VERIFIED_DEMO_TRANSFER` döndürdü.
 - Event-only işlem aynı Transfer biçimini farklı emitter'dan yayımladı; token balance değiştirmedi ve API `SUSPICIOUS_EVENT` döndürdü.
-- Bu aşamada otomatik watcher, persistence ve email bildirimi yoktur; transaction hash API'ye elle verilir.
+- Otomatik watcher, SQLite persistence, duplicate prevention ve Resend email transport uygulanmıştır.
+- Dashboard geçmişi `GET /api/v1/findings`, yeni bulguları `WS /api/v1/events` üzerinden alır.
 
 ## Backup prosedürü
 

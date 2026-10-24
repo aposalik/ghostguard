@@ -14,11 +14,10 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 
 - Repo: `https://github.com/aposalik/ghostguard.git`
 - Yerel: `/Users/abdullahsalik/.openclaw/workspace/Ghostguard`
-- Backend branch: `feature/backend-analyzer`
-- Base: `511a866` (`origin/main`)
-- Backend commit konusu: `feat: add deterministic receipt analyzer API`
-- Backend branch push/PR: yapılmadı
-- Zincir deployment: yok
+- Entegrasyon branch'i: `feature/live-findings`
+- Base: `398851c` (`origin/main`)
+- Frontend dashboard PR #6 sonrası doğrulanmış evidence düzeltmeleri PR #8 ile merge edildi.
+- Local docs deployment commit'i ve findings/WebSocket entegrasyonu bu branch'tedir.
 
 ## Son tamamlanan backend dilimi
 
@@ -72,6 +71,15 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Public `/health/live`, Monad-aware `/health` ve iki gerçek transaction analyze isteği doğrulandı; sonuçlar sırasıyla `VERIFIED_DEMO_TRANSFER` ve `SUSPICIOUS_EVENT`.
 - Public frontend URL belirlendiğinde `CORS_ORIGINS` Render environment değerine eklenmelidir.
 
+## Frontend/backend entegrasyonu
+
+- Quick Demo gerçek transfer ve event-only hash'lerini kullanır; varsayılan olarak public API'ye gider.
+- Recorded fallback sadece doğrulanmış iki response içerir ve UI'da açıkça recorded olarak etiketlenir.
+- Frontend `GET /api/v1/findings` ile history recovery ve `WS /api/v1/events` ile live update uygular.
+- Backend aynı endpoint'leri SQLite store ve in-process finding broker üzerinden sağlar.
+- `GET /` Render base URL'sinde servis ve endpoint bilgisini döndürür.
+- Root `npm run check`: frontend 16 test, backend 38 test; lint, typecheck ve production build başarılı.
+
 ## Tasarım sınırları
 
 - Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.
@@ -97,13 +105,13 @@ npm run check
 
 ## Blocker'lar
 
-- Public frontend URL yok; public backend live.
-- Findings HTTP/WebSocket delivery uçları henüz yok.
+- Public frontend URL yok; public backend'in önce integration commit'ine güncellenmesi gerekiyor.
+- Kesin frontend origin'i bilinmediği için production CORS allowlist güncellemesi bekliyor.
 
 ## Sonraki üç görev
 
-1. **Fahad + Salik:** Public frontend entegrasyonunu gerçek iki hash ve Render backend URL'siyle doğrula; frontend origin'ini CORS'a ekle.
-2. **P1:** Findings HTTP/WebSocket uçlarını tamamla.
+1. **Salik:** `feature/live-findings` branch'ini merge et ve Render'ı `main` üzerinden deploy ederek HTTP/WebSocket uçlarını doğrula.
+2. **Fahad + Salik:** Frontend'i public deploy et; origin'i CORS'a ekleyip iki gerçek hash ve live feed ile E2E doğrula.
 3. **Operasyon:** Ücretsiz hostun spin-down ve ephemeral SQLite sınırlamalarını demo akışında belgeleyip doğrula.
 
 ## Resume protokolü
