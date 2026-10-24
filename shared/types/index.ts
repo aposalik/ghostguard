@@ -67,6 +67,43 @@ export interface FindingsPage {
   nextCursor: string | null
 }
 
+export type AccountActivityDirection = 'INCOMING' | 'OUTGOING' | 'SELF'
+export type AccountActivityKind = 'NATIVE_TRANSFER' | 'CONTRACT_CALL' | 'TOKEN_TRANSFER'
+export type AccountActivityVerdict = 'CONFIRMED' | 'SUSPICIOUS' | 'NEEDS_REVIEW' | 'REVERTED'
+
+export interface MonitoredAccount {
+  chainId: number
+  address: HexAddress
+  enabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AccountActivity {
+  /** Stable identity scoped to the watched account and on-chain evidence source. */
+  id: string
+  chainId: number
+  watchedAddress: HexAddress
+  transactionHash: TransactionHash
+  blockNumber: string
+  direction: AccountActivityDirection
+  kind: AccountActivityKind
+  verdict: AccountActivityVerdict
+  counterpartyAddress: HexAddress | null
+  /** Token emitter for token transfers; null for native transfers and contract calls. */
+  assetAddress: HexAddress | null
+  /** Base-unit quantity serialized as an unsigned decimal string. */
+  amount: string
+  /** Present when receipt log evidence was analyzed by GhostGuard. */
+  finding: SecurityFinding | null
+  observedAt: string
+}
+
+export interface AccountActivitiesPage {
+  items: AccountActivity[]
+  nextCursor: string | null
+}
+
 export interface HealthResponse {
   status: 'ok' | 'degraded'
   chainId: number
@@ -113,6 +150,7 @@ export interface ApiErrorResponse {
   error: {
     code:
       | 'INVALID_REQUEST'
+      | 'INVALID_ACCOUNT_ADDRESS'
       | 'INVALID_TRANSACTION_HASH'
       | 'TRANSACTION_NOT_FOUND'
       | 'RPC_UNAVAILABLE'

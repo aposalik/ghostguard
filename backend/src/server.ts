@@ -29,6 +29,7 @@ async function start(): Promise<void> {
   const app = await buildApp({
     service,
     findings: store,
+    monitoring: store,
     events: findingEvents,
     ...(existsSync(frontendDirectory) ? { frontendDirectory } : {}),
     corsOrigins: config.corsOrigins,
@@ -58,6 +59,10 @@ async function start(): Promise<void> {
         onFinding: (finding) => {
           findingEvents.publish(finding)
           app.log.info({ finding }, 'Watcher stored a monitored transfer finding')
+        },
+        onActivity: (activity) => {
+          findingEvents.publishActivity(activity)
+          app.log.info({ activityId: activity.id }, 'Watcher stored monitored account activity')
         },
         onAlert: (finding) => app.log.info({ findingId: finding.id }, 'Watcher delivered an email alert'),
       })

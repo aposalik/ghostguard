@@ -12,7 +12,11 @@ import type {
 import type { AnalysisService } from '../analyzer/transaction-analyzer.js'
 import { TransactionNotFoundError } from '../analyzer/errors.js'
 import { RpcUnavailableError } from '../watcher/rpc.js'
-import { InvalidFindingsCursorError, type FindingStore } from '../watcher/store.js'
+import {
+  InvalidActivitiesCursorError,
+  InvalidFindingsCursorError,
+  type FindingStore,
+} from '../watcher/store.js'
 import type { FindingEventSource } from './finding-events.js'
 
 const TRANSACTION_HASH_PATTERN = /^0x[a-fA-F0-9]{64}$/
@@ -21,6 +25,10 @@ const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
 export interface BuildAppOptions {
   service: AnalysisService
   findings?: Pick<FindingStore, 'listFindings'>
+  monitoring?: Pick<
+    FindingStore,
+    'upsertAccountWatch' | 'listAccountWatches' | 'listAccountActivities'
+  >
   events?: FindingEventSource
   corsOrigins?: string[]
   frontendDirectory?: string
@@ -58,6 +66,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       findings: '/api/v1/findings',
       agents: '/api/v1/agents/status',
       events: '/api/v1/events',
+      monitoredAccounts: '/api/v1/monitoring/accounts',
     },
   }
 
@@ -125,6 +134,50 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     }
   })
 
+  app.get('/api/v1/monitoring/accounts', async (request, reply) => {
+    const chainId = await getHealthyChainId(options.service, reply, request.id)
+    if (chainId === null) return reply
+    return options.monitoring?.listAccountWatches(chainId) ?? []
+  })
+
+  app.put('/api/v1/monitoring/accounts/:address', async (request, reply) => {
+    const address = parseAccountAddress(request.params)
+    if (!address) {
+      return sendError(reply, 400, 'INVALID_ACCOUNT_ADDRESS', 'Account address must be 20 bytes.', request.id)
+    }
+    if (!isRecord(request.body) || typeof request.body.enabled !== 'boolean') {
+      return sendError(reply, 400, 'INVALID_REQUEST', 'Request body must include a boolean enabled field.', request.id)
+    }
+    if (!options.monitoring) {
+      return sendError(reply, 503, 'INTERNAL_ERROR', 'Account monitoring storage is unavailable.', request.id)
+    }
+
+    const chainId = await getHealthyChainId(options.service, reply, request.id)
+    if (chainId === null) return reply
+    return options.monitoring.upsertAccountWatch(chainId, address, request.body.enabled)
+  })
+
+  app.get('/api/v1/monitoring/accounts/:address/activities', async (request, reply) => {
+    const address = parseAccountAddress(request.params)
+    if (!address) {
+      return sendError(reply, 400, 'INVALID_ACCOUNT_ADDRESS', 'Account address must be 20 bytes.', request.id)
+    }
+    const parsed = parseFindingsQuery(request.query)
+    if (!parsed.ok) return sendError(reply, 400, 'INVALID_REQUEST', parsed.message, request.id)
+    if (!options.monitoring) return { items: [], nextCursor: null }
+
+    const chainId = await getHealthyChainId(options.service, reply, request.id)
+    if (chainId === null) return reply
+    try {
+      return options.monitoring.listAccountActivities(chainId, address, parsed.limit, parsed.cursor)
+    } catch (error) {
+      if (error instanceof InvalidActivitiesCursorError) {
+        return sendError(reply, 400, 'INVALID_REQUEST', error.message, request.id)
+      }
+      throw error
+    }
+  })
+
   await app.register(async function eventRoutes(routes) {
     routes.get('/api/v1/events', { websocket: true }, (socket, request) => {
       const origin = request.headers.origin
@@ -138,9 +191,18 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
           socket.send(JSON.stringify({ type: 'finding.created', data: finding }))
         }
       }) ?? (() => {})
+      const unsubscribeActivity = options.events?.subscribeActivity?.((activity) => {
+        if (socket.readyState === 1) {
+          socket.send(JSON.stringify({ type: 'activity.created', data: activity }))
+        }
+      }) ?? (() => {})
 
-      socket.once('close', unsubscribe)
-      socket.once('error', unsubscribe)
+      const cleanup = () => {
+        unsubscribe()
+        unsubscribeActivity()
+      }
+      socket.once('close', cleanup)
+      socket.once('error', cleanup)
     })
   })
 
@@ -184,6 +246,26 @@ function isSameOrigin(origin: string, headers: Record<string, string | string[] 
 function firstHeaderValue(value: string | string[] | undefined): string | undefined {
   const first = Array.isArray(value) ? value[0] : value?.split(',')[0]
   return first?.trim()
+}
+
+async function getHealthyChainId(
+  service: AnalysisService,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<number | null> {
+  const health = await service.health()
+  if (health.status !== 'ok' || health.chainId < 1) {
+    sendError(reply, 503, 'RPC_UNAVAILABLE', 'The configured Monad RPC endpoint is unavailable.', requestId)
+    return null
+  }
+  return health.chainId
+}
+
+function parseAccountAddress(params: unknown): HexAddress | null {
+  if (!isRecord(params) || typeof params.address !== 'string' || !ADDRESS_PATTERN.test(params.address)) {
+    return null
+  }
+  return params.address.toLowerCase() as HexAddress
 }
 
 type ParsedFindingsQuery =

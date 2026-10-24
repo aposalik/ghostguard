@@ -62,20 +62,123 @@ describe('TransferWatcher', () => {
     expect(store.pendingAlerts()).toEqual([])
     store.close()
   })
+
+  it('loads dynamic account watches and stores incoming and outgoing top-level activity', async () => {
+    const incomingHash = `0x${'a1'.repeat(32)}` as TransactionHash
+    const outgoingHash = `0x${'b2'.repeat(32)}` as TransactionHash
+    const rpc = new FakeWatchRpc([], 105n, [
+      {
+        hash: incomingHash,
+        from: RECIPIENT,
+        to: MONITORED,
+        value: '0x7',
+        input: '0x',
+        blockNumber: '0x64',
+      },
+      {
+        hash: outgoingHash,
+        from: MONITORED,
+        to: RECIPIENT,
+        value: '0x0',
+        input: '0x1234',
+        blockNumber: '0x64',
+      },
+    ])
+    const store = new SqliteFindingStore(':memory:')
+    store.upsertAccountWatch(10143, MONITORED, true, '2026-10-25T00:00:00.000Z')
+    const onActivity = vi.fn()
+    const watcher = new TransferWatcher(rpc, new FakeAnalyzer(), store, undefined, {
+      monitoredWallets: [],
+      startBlock: 100n,
+      transactionStartBlock: 100n,
+      confirmations: 5n,
+      blockRange: 10n,
+      pollIntervalMs: 1_000,
+      onActivity,
+    })
+
+    await watcher.runOnce()
+
+    const activities = store.listAccountActivities(10143, MONITORED, 20).items
+    expect(activities).toHaveLength(2)
+    expect(activities).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        transactionHash: incomingHash,
+        direction: 'INCOMING',
+        kind: 'NATIVE_TRANSFER',
+        verdict: 'CONFIRMED',
+        amount: '7',
+      }),
+      expect.objectContaining({
+        transactionHash: outgoingHash,
+        direction: 'OUTGOING',
+        kind: 'CONTRACT_CALL',
+        verdict: 'CONFIRMED',
+        amount: '0',
+      }),
+    ]))
+    expect(onActivity).toHaveBeenCalledTimes(2)
+    store.close()
+  })
+
+  it('starts top-level transaction listening at activation time instead of replaying the log backfill range', async () => {
+    const rpc = new FakeWatchRpc([], 105n, [{
+      hash: `0x${'a1'.repeat(32)}` as TransactionHash,
+      from: RECIPIENT,
+      to: MONITORED,
+      value: '0x7',
+      input: '0x',
+      blockNumber: '0x64',
+    }])
+    const store = new SqliteFindingStore(':memory:')
+    store.upsertAccountWatch(10143, MONITORED, true)
+    const watcher = new TransferWatcher(rpc, new FakeAnalyzer(), store, undefined, {
+      monitoredWallets: [],
+      startBlock: 100n,
+      confirmations: 5n,
+      blockRange: 10n,
+      pollIntervalMs: 1_000,
+    })
+
+    await watcher.runOnce()
+
+    expect(rpc.blockRequests).toEqual([])
+    expect(store.listAccountActivities(10143, MONITORED, 20).items).toEqual([])
+    store.close()
+  })
 })
 
+interface FakeBlockTransaction {
+  hash: TransactionHash
+  from: HexAddress
+  to: HexAddress | null
+  value: string
+  input: string
+  blockNumber: string
+}
+
 class FakeWatchRpc implements WatchRpc {
+  readonly blockRequests: bigint[] = []
   private readonly logs: RpcFilterLog[]
   private readonly latestBlock: bigint
+  private readonly transactions: FakeBlockTransaction[]
 
-  constructor(logs: RpcFilterLog[], latestBlock: bigint) {
+  constructor(logs: RpcFilterLog[], latestBlock: bigint, transactions: FakeBlockTransaction[] = []) {
     this.logs = logs
     this.latestBlock = latestBlock
+    this.transactions = transactions
   }
 
   async getChainId(): Promise<number> { return 10143 }
   async getBlockNumber(): Promise<bigint> { return this.latestBlock }
-  async getTransactionReceipt(): Promise<RpcReceipt | null> { return null }
+  async getTransactionReceipt(transactionHash: TransactionHash): Promise<RpcReceipt | null> {
+    return {
+      transactionHash,
+      blockNumber: '0x64',
+      status: '0x1',
+      logs: [],
+    }
+  }
 
   async getLogs(filter: RpcLogFilter): Promise<RpcFilterLog[]> {
     if (filter.topics[1] === null) return []
@@ -83,6 +186,11 @@ class FakeWatchRpc implements WatchRpc {
       const block = BigInt(log.blockNumber)
       return block >= filter.fromBlock && block <= filter.toBlock
     })
+  }
+
+  async getBlockTransactions(blockNumber: bigint): Promise<FakeBlockTransaction[]> {
+    this.blockRequests.push(blockNumber)
+    return this.transactions.filter((transaction) => BigInt(transaction.blockNumber) === blockNumber)
   }
 }
 

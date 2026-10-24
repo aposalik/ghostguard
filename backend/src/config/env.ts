@@ -50,7 +50,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
     demoEventOnlyAddress: optionalAddress(env.DEMO_EVENT_ONLY_ADDRESS, 'DEMO_EVENT_ONLY_ADDRESS'),
     corsOrigins: commaSeparated(env.CORS_ORIGINS, ['http://localhost:5173']),
     watcher: {
-      enabled: booleanValue(env.WATCH_ENABLED, false, 'WATCH_ENABLED'),
+      enabled: booleanValue(env.WATCH_ENABLED, true, 'WATCH_ENABLED'),
       monitoredWallets: commaSeparated(env.MONITORED_WALLET_ADDRESSES, [])
         .map((value) => requiredAddress(value, 'MONITORED_WALLET_ADDRESSES')),
       startBlock: optionalUnsignedBigInt(env.WATCH_START_BLOCK, 'WATCH_START_BLOCK'),
@@ -78,9 +78,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
     },
   }
 
-  if (config.watcher.enabled && config.watcher.monitoredWallets.length === 0) {
-    throw new Error('MONITORED_WALLET_ADDRESSES is required when WATCH_ENABLED=true.')
-  }
   if (config.email.enabled && (!config.email.apiKey || !config.email.from || !config.email.to)) {
     throw new Error('EMAIL_API_KEY, ALERT_EMAIL_FROM, and ALERT_EMAIL_TO are required when EMAIL_ENABLED=true.')
   }

@@ -2,10 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   analyzeTransaction,
   checkBackendHealth,
+  fetchAccountActivities,
   fetchAgentStatus,
+  fetchMonitoredAccounts,
   fetchRecentFindings,
   getEventsWsUrl,
+  isAccountAddress,
   isTransactionHash,
+  setAccountMonitoring,
   type AnalysisRequest,
   type AnalysisResponse,
 } from './api'
@@ -307,5 +311,66 @@ describe('fetchAgentStatus', () => {
     const status = await fetchAgentStatus()
     expect(status.producer.state).toBe('disabled')
     expect(status.detector.state).toBe('running')
+  })
+})
+
+describe('account monitoring API', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('validates 20-byte account addresses before making requests', async () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+
+    expect(isAccountAddress(`0x${'a1'.repeat(20)}`)).toBe(true)
+    expect(isAccountAddress('0x1234')).toBe(false)
+    await expect(setAccountMonitoring('0x1234', true)).rejects.toEqual(
+      expect.objectContaining({ code: 'INVALID_ACCOUNT_ADDRESS', status: 400 }),
+    )
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('enables Agent Mode using an idempotent watch update', async () => {
+    const address = `0x${'A1'.repeat(20)}`
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        chainId: 10143,
+        address: address.toLowerCase(),
+        enabled: true,
+        createdAt: '2026-10-25T00:00:00.000Z',
+        updatedAt: '2026-10-25T00:00:00.000Z',
+      }),
+    })
+    vi.stubGlobal('fetch', fetchSpy)
+
+    const watch = await setAccountMonitoring(address, true)
+
+    expect(watch.enabled).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`/api/v1/monitoring/accounts/${address.toLowerCase()}`),
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ enabled: true }) }),
+    )
+  })
+
+  it('loads monitored accounts and durable account activity pages', async () => {
+    const address = `0x${'a1'.repeat(20)}`
+    const fetchSpy = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [] })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [], nextCursor: 'older' }),
+      })
+    vi.stubGlobal('fetch', fetchSpy)
+
+    await expect(fetchMonitoredAccounts()).resolves.toEqual([])
+    await expect(fetchAccountActivities(address, 30, 'page')).resolves.toEqual({
+      items: [],
+      nextCursor: 'older',
+    })
+    expect(String(fetchSpy.mock.calls[1]?.[0])).toContain(
+      `/api/v1/monitoring/accounts/${address}/activities?limit=30&cursor=page`,
+    )
   })
 })

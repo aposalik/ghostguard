@@ -99,6 +99,17 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Root verification geçti: frontend 16 test, backend 45 test, lint/typecheck/build ve npm audit.
 - Branch push/deploy edilmedi. Working tree'deki önceden var olan `LICENSE` değişikliği redesign commitine dahil edilmemelidir.
 
+## Account Agent Mode implementation
+
+- Try It input'u artık account address alır; Agent Mode toggle watch kaydını SQLite'ta enable/disable eder.
+- Backend shared contracts: `MonitoredAccount`, `AccountActivity`, `AccountActivitiesPage`.
+- REST: `GET/PUT /api/v1/monitoring/accounts*`; realtime: `activity.created` aynı `/api/v1/events` socket'i üzerinde.
+- Watcher iki ayrı checkpoint kullanır: Transfer log backfill ve listen-from-now top-level transaction stream. Bu ayrım historical `WATCH_START_BLOCK` üzerinden yüzlerce `eth_getBlockByNumber` çağrısı yapılmasını önler.
+- Top-level scanning internal transfersı kapsamaz. Token balance-delta check halen `UNKNOWN` olabilir; unknown hiçbir zaman otomatik red/suspicious yapılmaz.
+- Frontend graph/activity state `useAccountMonitor.ts`; deterministic graph mapping `utils/evidence-graph.ts`; graph ve ledger componentleri kendi dosyalarındadır.
+- Geçici DB integration, pause/resume persistence, desktop/mobile screenshots doğrulandı. Public deployment henüz bu implementation'ı içermiyor.
+- Public multi-user watch ownership/auth ve quota production hardening olarak gereklidir.
+
 ## Tasarım sınırları
 
 - Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.

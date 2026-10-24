@@ -10,8 +10,10 @@
 - `SUSPICIOUS_EVENT`: decoded log configured `DemoEventOnly` emitter'ından gelir.
 - `NEEDS_REVIEW`: emitter bilinmiyor veya log alanları decode edilemiyor.
 - Revert receipt: transaction `REVERTED`, finding listesi boş; başarılı transfer iddiası üretilmez.
-- Opsiyonel finalized-block watcher, monitored wallet'ları indexed `from` ve `to` topic'lerinde tarar.
-- SQLite checkpoint/findings ile restart recovery ve `chainId:txHash:logIndex` deduplication sağlar.
+- Finalized-block watcher, SQLite'taki dinamik account watchlist'i ve opsiyonel environment seed adreslerini her cycle'da okur.
+- ERC-20 `Transfer` loglarını indexed `from`/`to` topic'lerinde; aktivasyondan sonraki top-level native transfer ve contract call'ları full block transaction verisinde tarar.
+- SQLite checkpoint, watch, activity ve finding tabloları restart recovery sağlar. Agent Mode kapatıldığında activity geçmişi silinmez.
+- `AccountActivity` direction (`INCOMING`, `OUTGOING`, `SELF`) ve verdict (`CONFIRMED`, `SUSPICIOUS`, `NEEDS_REVIEW`, `REVERTED`) alanlarını ayrı tutar; yön tek başına güven kararı değildir.
 - `SUSPICIOUS_EVENT` ve `NEEDS_REVIEW` bulguları için opsiyonel email gönderir; başarısız gönderimler SQLite'ta pending kalır.
 
 Bu aşama balance-delta kontrolü yapmaz; `TOKEN_STATE_SUPPORTS_CLAIM` sonucu bilinçli olarak `UNKNOWN` kalır. Bilinmeyen emitter “fraud” ilan edilmez.
@@ -26,9 +28,9 @@ Root'ta `.env.local` yerine shell/host secret ayarlarıyla aşağıdaki değişk
 - `CORS_ORIGINS` — virgülle ayrılmış frontend origin listesi; varsayılan `http://localhost:5173`
 - `PORT` — varsayılan `3000`
 - `RPC_TIMEOUT_MS` — varsayılan `10000`
-- `WATCH_ENABLED` — watcher'ı açmak için `true`
-- `MONITORED_WALLET_ADDRESSES` — virgülle ayrılmış public wallet adresleri
-- `WATCH_START_BLOCK` — ilk backfill bloğu; boşsa ilk cycle'ın finalized head bloğundan başlar
+- `WATCH_ENABLED` — varsayılan `true`; account watcher'ı açık tutar
+- `MONITORED_WALLET_ADDRESSES` — opsiyonel, virgülle ayrılmış seed adresler; kullanıcı Agent Mode watch'ları SQLite üzerinden eklenir
+- `WATCH_START_BLOCK` — ERC-20 log finding backfill başlangıcı; top-level transaction dinleme güvenli şekilde aktivasyon anından başlar
 - `WATCH_CONFIRMATIONS` — varsayılan `5`
 - `WATCH_BLOCK_RANGE` — tek RPC sorgusundaki azami blok aralığı; public Monad RPC limiti için varsayılan `100`
 - `WATCH_POLL_INTERVAL_MS` — varsayılan `3000`
@@ -43,6 +45,15 @@ npm run dev:backend
 
 Backend, trusted address tanımlı değilse kullanıcıdan gelen `expectedTokenAddress` değerini yalnızca karşılaştırma bağlamı olarak gösterir; bu değer tek başına `VERIFIED_DEMO_TRANSFER` üretemez.
 
+## Account Agent Mode API
+
+- `GET /api/v1/monitoring/accounts` — kalıcı watch kayıtları
+- `PUT /api/v1/monitoring/accounts/:address` — `{ "enabled": true|false }`; idempotent Agent Mode toggle
+- `GET /api/v1/monitoring/accounts/:address/activities?limit=100&cursor=<opaque>` — kalıcı activity timeline
+- `WS /api/v1/events` — mevcut `finding.created` yanında `activity.created` frame'i
+
+Bir on-chain transaction'ın kendisi “fake” sayılmaz. Kırmızı `SUSPICIOUS` verdict, doğrulanmış bir transaction içindeki yanıltıcı transfer claim'i gibi deterministik kanıta dayanır; bilinmeyen kanıt `NEEDS_REVIEW` kalır.
+
 ## Doğrulama
 
 ```bash
@@ -56,8 +67,7 @@ Email kapalıyken watcher bulguları kaydeder fakat dış mesaj göndermez. Emai
 
 ## Sonraki backend adımları
 
-1. Foundry sözleşmeleri ve testleri.
-2. Monad Testnet deployment + doğrulanmış iki seed transaction.
-3. Gerçek RPC integration testi ve public backend deployment.
-4. Public host üzerinde watcher/email operational doğrulaması.
-5. Bulgular için HTTP pagination ve WebSocket delivery.
+1. Public çok-kullanıcılı kullanım için watch ownership/auth ve per-user quota eklemek.
+2. Token metadata/decimals çözümleme ve balance-delta evidence uygulamak.
+3. Internal value transferları için trace-capable RPC desteği eklemek.
+4. Public host üzerinde yeni account monitoring migration ve realtime akışını doğrulamak.

@@ -169,7 +169,7 @@ export function AnalysisPanel({ state, data, error, errorInfo, onRetry }: Analys
                         ) : (
                           '0x...'
                         )}
-                        . <strong>No actual token balance changed.</strong>
+                        . <strong>This log cannot prove a trusted-token balance change.</strong>
                       </p>
                       <div className="mismatch-breakdown">
                         <div className="mismatch-side actual-decoy">
@@ -178,7 +178,7 @@ export function AnalysisPanel({ state, data, error, errorInfo, onRetry }: Analys
                             <CopyButton text={finding.actualEmitterAddress} label="Copy decoy emitter address" />
                           </div>
                           <span className="side-address">{finding.actualEmitterAddress}</span>
-                          <span className="side-verdict">⚠️ Emits empty transfer logs without token custody</span>
+                          <span className="side-verdict">⚠️ Configured event-only demo emitter</span>
                         </div>
                         <div className="mismatch-side expected-token">
                           <div className="side-title-row">
@@ -188,7 +188,7 @@ export function AnalysisPanel({ state, data, error, errorInfo, onRetry }: Analys
                             )}
                           </div>
                           <span className="side-address">{finding.expectedTokenAddress ?? 'Not specified'}</span>
-                          <span className="side-verdict">❌ Zero balance update recorded on this contract</span>
+                          <span className="side-verdict">◌ Balance-delta evidence remains explicitly UNKNOWN</span>
                         </div>
                       </div>
                     </div>

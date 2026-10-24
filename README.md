@@ -9,6 +9,8 @@
 
 GhostGuard is an on-chain security monitoring tool and deterministic transaction analyzer built for the **Monad Blitz Ankara (October 2026)** hackathon. It detects and explains **ERC-20 Event Spoofing** and deceptive transfer claims by auditing transaction receipts, log emitters, and token contracts against verifiable blockchain state.
 
+In **Try It → Agent Mode**, enter a Monad account address to persistently follow finalized incoming/outgoing activity. The Evidence Inspector draws an animated account graph—green incoming, yellow outgoing, red only for deterministically suspicious evidence—and keeps the transaction ledger in SQLite when monitoring is paused or the service restarts.
+
 ---
 
 ## 🌐 Live Deployments & Testnet Proofs
@@ -54,17 +56,17 @@ flowchart TD
     end
 
     subgraph Backend ["GhostGuard Backend & Ingestion Engine"]
-        W["Transfer Watcher\n(Bounded Range Polling)"]
-        DB[("SQLite Persistence\n(Node 22 DatabaseSync)")]
+        W["Account Activity Watcher\n(Logs + Full Blocks)"]
+        DB[("SQLite Persistence\n(Watches + Activities + Findings)")]
         A["Deterministic Analyzer\n(Receipt & Emitter Audit)"]
         EM["Email Alerting Engine\n(Resend API / Idempotent Queue)"]
         WS["WebSocket Server\n(/api/v1/events)"]
-        REST["REST Endpoints\n(/api/v1/transactions/analyze)"]
+        REST["REST Endpoints\n(Analysis + Account Monitoring)"]
     end
 
     subgraph Frontend ["GhostGuard Dashboard (React 19 + Vite)"]
-        UI["Evidence & Live Monitor UI"]
-        Preset["Quick Demo Scenario Switcher"]
+        UI["Animated Evidence Graph"]
+        Ledger["Persistent Transaction Ledger"]
     end
 
     DT -.->|Real Transfers| RPC
@@ -76,7 +78,7 @@ flowchart TD
 
     A -->|Validate Emitter & Topics| A
     A -->|Suspicious Events| EM
-    A -->|Broadcast finding.created| WS
+    A -->|Broadcast finding.created + activity.created| WS
     A -->|Query Results| REST
 
     REST -->|Typed Responses| UI
@@ -281,13 +283,26 @@ Analyzes an on-chain transaction receipt against expected token contracts.
 }
 ```
 
+### Account Agent Mode
+
+```http
+GET /api/v1/monitoring/accounts
+PUT /api/v1/monitoring/accounts/:address
+GET /api/v1/monitoring/accounts/:address/activities?limit=100&cursor=<opaque>
+WS  /api/v1/events
+```
+
+The `PUT` body is `{ "enabled": true }` or `{ "enabled": false }`. Disabling a watch pauses future indexing without deleting stored activity. WebSocket clients receive both `finding.created` and `activity.created`; HTTP activity pages remain the durable recovery source.
+
+`direction` (`INCOMING`, `OUTGOING`, `SELF`) and trust `verdict` (`CONFIRMED`, `SUSPICIOUS`, `NEEDS_REVIEW`, `REVERTED`) are independent. An on-chain transaction is real once finalized; red identifies deceptive evidence inside it, not a forged blockchain transaction.
+
 ---
 
 ## 👥 Team & Ownership
 
 Built during **Monad Blitz Ankara (24 October 2026)**:
 
-* **Developer A — Fahad ([@MFahadFaisal](https://github.com/MFahadFaisal)):** Frontend Engineering, UX Architecture, Responsive Design, Preset Scenarios, and Client Integration.
+* **Developer A — Fahad ([@MFahadFaisal](https://github.com/MFahadFaisal)):** Frontend Engineering, UX Architecture, Responsive Design, Agent Mode Graph, and Client Integration.
 * **Developer B — Abdullah Salik ([@aposalik](https://github.com/aposalik)):** Backend Architecture, RPC Watcher, Foundry Smart Contracts, Deterministic Analyzer, SQLite Persistence, and On-Chain Deployment.
 
 ---

@@ -78,6 +78,27 @@ describe('JsonRpcClient', () => {
       params: [{ fromBlock: '0x28', toBlock: '0x2a', topics: ['0xtopic', null] }],
     })
   })
+
+  it('loads full block transactions for account direction indexing', async () => {
+    const transaction = {
+      hash: TX_HASH,
+      from: `0x${'11'.repeat(20)}`,
+      to: `0x${'22'.repeat(20)}`,
+      value: '0x7',
+      input: '0x',
+      blockNumber: '0x2a',
+    }
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({
+      jsonrpc: '2.0',
+      id: 1,
+      result: { number: '0x2a', timestamp: '0x671c2c20', transactions: [transaction] },
+    }))
+    const client = new JsonRpcClient('https://rpc.example.test', 1_000, fetcher)
+
+    await expect(client.getBlockTransactions(42n)).resolves.toEqual([transaction])
+    const request = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body)) as { method: string; params: unknown[] }
+    expect(request).toMatchObject({ method: 'eth_getBlockByNumber', params: ['0x2a', true] })
+  })
 })
 
 function jsonResponse(value: unknown): Response {

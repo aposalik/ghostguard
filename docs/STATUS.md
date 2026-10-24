@@ -27,6 +27,17 @@
 - 2026-10-25 local final check: frontend 16 test, backend 45 test, lint/typecheck ve iki production build geçti; npm audit 0 vulnerability.
 - Kullanıcının önceden değiştirdiği `LICENSE` bu branch'te korunur fakat redesign commit kapsamına alınmayacaktır.
 
+### Account Agent Mode — local implementation
+
+- Try It artık transaction-hash-first form yerine account address + Agent Mode toggle kullanır.
+- SQLite `account_watches` ve `account_activities` tabloları watch state ve geçmişi restart sonrasında korur; pause history silmez.
+- Watcher finalized ERC-20 loglarını ve aktivasyon sonrası top-level native transfer/contract call'ları tarar. Internal trace transferları henüz kapsam dışıdır.
+- Activity model direction (`INCOMING`/`OUTGOING`/`SELF`) ile trust verdict'ini (`CONFIRMED`/`SUSPICIOUS`/`NEEDS_REVIEW`/`REVERTED`) ayrı tutar.
+- `PUT /api/v1/monitoring/accounts/:address`, account/activity GET endpointleri ve `activity.created` WebSocket frame'i eklendi.
+- Evidence Inspector animated account graph'tır: incoming green, outgoing yellow, suspicious red, needs-review violet. Stored Transactions listesi SQLite geçmişini gösterir.
+- Geçici SQLite üzerinde iki gerçek Monad logu kalıcı activity olarak doğrulandı: bir confirmed ve bir suspicious; Agent Mode pause/resume sonrasında history count korunarak `2` kaldı.
+- Desktop ve 500 px mobile active-account ekranları görsel incelemeden geçti.
+
 ### Backend ilk dikey dilim
 
 - Fastify uygulaması ve CORS allowlist.
