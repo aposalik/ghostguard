@@ -1,0 +1,9 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+
+# Compiler version and optimizer settings belong to Developer B's first
+# contract PR, together with tests that verify the selected configuration.

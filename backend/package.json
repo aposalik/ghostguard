@@ -1,0 +1,7 @@
+{
+  "name": "@ghostguard/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Developer B için ayrılmış GhostGuard backend çalışma alanı"
+}
