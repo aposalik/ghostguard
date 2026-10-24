@@ -17,6 +17,16 @@
 - Dashboard gerçek iki Monad transaction'ını Quick Demo olarak kullanır, live API'yi varsayılan seçer ve yalnızca açık etiketli recorded response fallback'i sunar.
 - Backend health, findings geçmişi, WebSocket reconnect/backoff ve HTTP recovery frontend'de uygulanmıştır.
 
+### Portfolio Home + Try It redesign — local branch
+
+- Branch: `feature/home-try-redesign`; henüz push/deploy edilmedi.
+- Yeni `/` Home deneyimi problem, method, shipped proof, detection loop, team ve roadmap bölümleriyle projeyi portfolio formatında anlatır.
+- Canlı Monad analyzer ayrı `/#/try-it` deneyimine taşındı; hash route unified static hostta server rewrite gerektirmez.
+- Home ve Try It ortak acid-lime/deep-olive/orange/cream görsel sistemi, condensed/editorial tipografi, print-grid texture, hard-shadow kartlar ve reduced-motion fallback kullanır.
+- Idle, live feed ve gerçek `SUSPICIOUS_EVENT` result state'i desktop; Home/Try It hero'ları 500 px mobilde görsel olarak doğrulandı.
+- 2026-10-25 local final check: frontend 16 test, backend 45 test, lint/typecheck ve iki production build geçti; npm audit 0 vulnerability.
+- Kullanıcının önceden değiştirdiği `LICENSE` bu branch'te korunur fakat redesign commit kapsamına alınmayacaktır.
+
 ### Backend ilk dikey dilim
 
 - Fastify uygulaması ve CORS allowlist.

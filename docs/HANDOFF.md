@@ -89,6 +89,16 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Email-enabled deploy `dep-dbea40oae00c73cf5d0g` live; dashboard HTML/assets, health, findings, iki gerçek analyze sonucu ve same-origin WebSocket doğrulandı.
 - Kullanıcının açık onayıyla Resend ayarları aktarıldı; watcher suspicious finding için email delivery logunu üretti.
 
+## Aktif frontend portfolio redesign
+
+- Branch: `feature/home-try-redesign`; `main` commit `696e870` üzerinden açıldı.
+- `/` artık proje anlatısı için portfolio Home; canlı analyzer `/#/try-it` altında ayrı workbench'tir.
+- `frontend/src/theme.css`, `HomePage.tsx`, `TryItPage.tsx`, `GhostBloom.tsx` ve shared header/footer tasarım sisteminin ana artefaktlarıdır.
+- Backend/API/shared contract değiştirilmedi.
+- Desktop Home/Try It, 500 px mobile Home/Try It ve gerçek event-only result state screenshot inspection'dan geçti.
+- Root verification geçti: frontend 16 test, backend 45 test, lint/typecheck/build ve npm audit.
+- Branch push/deploy edilmedi. Working tree'deki önceden var olan `LICENSE` değişikliği redesign commitine dahil edilmemelidir.
+
 ## Tasarım sınırları
 
 - Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.

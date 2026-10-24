@@ -1,61 +1,49 @@
 # GhostGuard Frontend
 
-Developer A çalışma alanı. React 19, Vite, Oxlint, Vitest ve strict TypeScript ile geliştirilmiştir. Monad Testnet üzerinde ERC-20 Transfer logları ile gerçek sözleşme emitter'larını karşılaştırır.
+**Sahip: Fahad (@MFahadFaisal).** React 19, Vite, Oxlint, Vitest ve strict TypeScript ile geliştirilir.
 
-## Canlı Dağıtım (Public Web Deployment)
+## Deneyim yapısı
 
-GhostGuard frontend'i Vercel, Netlify veya Cloudflare Pages üzerinde statik SPA olarak dağıtılmaya hazırdır.
+- **Home (`/`)**: Projeyi, tehdit modelini, kanıt akışını, canlı doğrulamaları, ekibi ve yol haritasını anlatan portfolio/landing page.
+- **Try It (`/#/try-it`)**: Gerçek Monad Testnet transaction hash'lerini receipt, emitter ve decoded `Transfer` loglarıyla inceleyen canlı workbench.
+- Hash routing kullanıldığı için unified Fastify/static deployment'ta ek server rewrite kuralı gerekmez.
+- Home ve Try It aynı tasarım sistemi kullanır: acid lime, deep olive, orange, cream, violet/coral accent'ler; Anton + Instrument Serif + Manrope + IBM Plex Mono tipografi; reduced-motion fallback.
 
-### Vercel Dağıtımı
-- **Framework Preset**: Vite
-- **Root Directory**: `frontend` (veya monorepo kökünde `vercel.json` kullanarak)
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-- **Environment Variables**:
-  - `VITE_API_BASE_URL`: GhostGuard Fastify backend URL'si. Production build `frontend/.env.production` üzerinden public Render backend'ine, yerel geliştirme varsayılan olarak `http://localhost:3000` adresine bağlanır. Backend çevrimdışıyken yalnızca iki gerçek demo transaction'ından kaydedilmiş cevaplar açık `Recorded Demo Mode` etiketiyle kullanılabilir.
+## Gerçek veri sınırı
 
-### Netlify Dağıtımı
-Proje kökündeki `netlify.toml` otomatik olarak `frontend` dizinini derler ve SPA yönlendirmelerini (`/index.html`) yapılandırır.
+Frontend verdict üretmez. `POST /api/v1/transactions/analyze`, `GET /api/v1/findings`, `GET /api/v1/agents/status` ve `WS /api/v1/events` cevaplarını sunar. Backend erişilemiyorsa açık hata gösterir; recorded preset veya client-side fake event yoktur.
 
----
-
-## Yerel Geliştirme Komutları
+## Yerel geliştirme
 
 ```bash
-# Bağımlılıkları yükle
 npm install
-
-# Geliştirme sunucusunu başlat (Vite localhost:5173)
 npm run dev --workspace @ghostguard/frontend
+```
 
-# Kod kalitesi ve tip kontrolleri
+Vite geliştirme sunucusu varsayılan olarak `http://localhost:5173`; API varsayılanı `http://localhost:3000` olur. Unified production build aynı origin altında `/api/v1/*` kullanır.
+
+## Doğrulama
+
+```bash
 npm run lint --workspace @ghostguard/frontend
 npm run typecheck --workspace @ghostguard/frontend
-
-# Birim testlerini çalıştır (12 test)
 npm run test --workspace @ghostguard/frontend
-
-# Üretim build'i al
 npm run build --workspace @ghostguard/frontend
-
-# Tüm doğrulamaları tek seferde çalıştır
 npm run check
 ```
 
----
+Görsel kabul matrisi:
 
-## 90 Saniyelik Hakem Demosu Akışı
+- 1440 px desktop: Home hero/sections, Try It workbench, result state ve live sidebar.
+- 500 px mobile: tek sütun hero, search form, illustration ve analyzer kartları; yatay taşma olmamalı.
+- `prefers-reduced-motion`: sürekli/scroll animasyonları kapatılmalı.
 
-1. **Senaryo A (Meşru Transfer)**: `Scenario A: Legitimate Transfer` butonuna tıklandığında doğrulanmış `DemoToken` transfer hash'i yüklenir ve yeşil kalkan rozeti (`VERIFIED_DEMO_TRANSFER`) görüntülenir.
-2. **Senaryo B (Sahte Decoy Olayı)**: `Scenario B: Spoofed Decoy` butonuna tıklandığında `DemoEventOnly` işlem hash'i taranır ve **Emitter Mismatch** uyarı kutusu (`SUSPICIOUS_EVENT`) tetiklenir:
-   > *"The Transfer-shaped log was emitted by the configured event-only demo contract rather than DemoToken."*
-3. **Canlı İzleme Paneli (Live Monitor)**: Son taranan olaylar listelenir; herhangi bir işleme tıklandığında detaylı kanıt kartı `AnalysisPanel` üzerinde incelenir.
-4. **Monad Explorer Bağlantıları**: Tüm adresler ve hash'ler `https://testnet.monadscan.com` doğrudan bağlantıları ve kopyalama butonları (`📋`) içerir.
+## Temel yollar
 
----
-
-## Responsive & Mobil Uyumluluk
-
-- **375px (Kompakt Mobil)**: Tek sütun dikey kart yapısı, yatay taşmasız hash inputu, otomatik text-ellipsis ve adres kopyalama butonları.
-- **500px (Geniş Mobil)**: Responsive grid, dokunmatik uyumlu butonlar ve amber simülasyon uyarı bandı.
-- **Masaüstü (1200px+)**: İki sütunlu gösterge paneli, Monad resmi obsidian & electric violet teması ve interaktif 3D koruma prizması (`Monad3DScene`).
+- `src/pages/HomePage.tsx`: portfolio homepage
+- `src/pages/TryItPage.tsx`: canlı analyzer deneyimi
+- `src/components/AppHeader.tsx`: Home/Try It navigation
+- `src/components/GhostBloom.tsx`: özgün GhostGuard hero illustration
+- `src/theme.css`: paylaşılan portfolio tasarım sistemi ve analyzer override'ları
+- `src/index.css`: mevcut component layout/behavior temeli
+- `src/services/api.ts`: HTTP/WebSocket adresleme ve API adapter'ları
