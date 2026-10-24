@@ -61,15 +61,17 @@ Kritik yol: **B1 + B2 → B3 → B4 → F2 final doğrulama → F3 → demo prov
 
 ## Salik — Backend ve Contracts
 
-### B1 — Foundry demo sözleşmeleri (P0, `BLOCKED`)
+### B1 — Foundry demo sözleşmeleri (P0, `DONE`)
 
 - `DemoToken.sol`: gerçek ERC-20 balance değişimi.
 - `DemoEventOnly.sol`: kontrollü transfer-shaped event, token state değişimi yok.
 - Unit testlerde balance ve event kanıtlarını ayrı assert et.
-- **Blocker:** Bu makinede `forge`, `cast`, `anvil` kurulu değil.
+- `DemoToken` gerçek balance değişimi ve ERC-20 `Transfer` event'i üretir.
+- `DemoEventOnly` owner-gated biçimde aynı event şeklini token state olmadan üretir.
+- 3 Foundry testi gerçek balance/event ayrımını ve yetkisiz event reddini doğrular.
 - **Kabul:** `forge fmt --check` ve `forge test` geçer.
 
-### B2 — Fixture tabanlı analyzer ve Fastify API (P0, `IN PROGRESS`)
+### B2 — Fixture tabanlı analyzer ve Fastify API (P0, `DONE`)
 
 Tamamlanan ilk dilim:
 
@@ -80,18 +82,18 @@ Tamamlanan ilk dilim:
 - `GET /health`, `POST /api/v1/transactions/analyze`, canonical API errors ve CORS allowlist.
 - 4 test dosyasında 21 unit/API testi.
 
-Kalan:
-
-- Gerçek Monad RPC integration testi.
-- Gerekirse aynı blok bağlamında token-state/balance kanıtı; uygulanana kadar check `UNKNOWN` kalır.
+- Gerçek Monad RPC üzerinde iki seed tx aynı API şemasında doğru ayrıldı.
+- Aynı blok bağlamında token-state/balance kanıtı uygulanana kadar ilgili check `UNKNOWN` kalır; kontrollü demo emitter kanıtı doğrulandı.
 - **Kabul:** Fixture testleri ve iki gerçek seed tx aynı API şemasında doğru ayrılır.
 
-### B3 — Monad Testnet deployment ve seed işlemler (P0, `TODO`)
+### B3 — Monad Testnet deployment ve seed işlemler (P0, `DONE`)
 
 - B1 sonrası iki sözleşmeyi disposable testnet wallet ile deploy et.
 - Bir gerçek token transferi ve bir event-only işlem üret.
 - Chain ID, contract adresleri, tx hash'leri ve explorer linklerini doğrula.
 - `TRUSTED_DEMO_TOKEN_ADDRESS` ve `DEMO_EVENT_ONLY_ADDRESS` deployment config'e ekle.
+- Resmî RPC/chain bilgisi ve live chain ID doğrulandı; deployment+seed script'i local ve gerçek RPC üzerinde broadcast edilmeden simüle edildi.
+- İki contract deploy edildi; gerçek transfer ve event-only seed transaction'ları RPC ve API üzerinden doğrulandı.
 - **Kabul:** Explorer ve RPC iki işlemi aynı chain'de gösterir.
 
 ### B4 — Gerçek RPC doğrulaması ve public backend (P0, `TODO`)
@@ -101,11 +103,13 @@ Kalan:
 - Fahad'ın kesin frontend origin'ini CORS allowlist'e ekle.
 - **Kabul:** Public `/health` ve iki analyze isteği dış ağdan çalışır.
 
-### B5 — Persistence, watcher ve WebSocket (P1, `TODO`)
+### B5 — Persistence, watcher ve notifications (P1, `IN PROGRESS`)
 
-- SQLite findings + checkpoint.
-- Idempotent `chainId:txHash:logIndex` kayıtları.
-- Disconnect/reconnect + missed-range recovery.
+- SQLite findings + checkpoint. **DONE**
+- Idempotent `chainId:txHash:logIndex` kayıtları. **DONE**
+- Finalized-block polling, bounded range backfill ve restart recovery. **DONE**
+- Monitored wallet için indexed `from`/`to` topic taraması. **DONE**
+- `SUSPICIOUS_EVENT`/`NEEDS_REVIEW` email transport, template ve retry queue. **IMPLEMENTED; live provider credentials bekliyor**
 - `GET /api/v1/findings` ve `WS /api/v1/events`.
 
 ---
@@ -116,9 +120,9 @@ Kalan:
 |---|---|---|---|---|
 | Monorepo ve ortak tipler | Ortak | Yok | DONE | Root check geçti |
 | Dashboard foundation | Fahad | Ortak tipler | DONE | Frontend lint/typecheck/test/build |
-| Demo sözleşmeleri | Salik | Foundry | BLOCKED | `forge test` |
-| Fixture analyzer/API | Salik | Ortak tipler | IN PROGRESS | 21 backend test + build geçti; real RPC bekliyor |
-| Testnet deployment/seed tx | Salik | B1 | TODO | Explorer kanıtı |
+| Demo sözleşmeleri | Salik | Foundry | DONE | `forge fmt --check`; 3 Foundry testi geçti |
+| Fixture analyzer/API | Salik | Ortak tipler | DONE | 21 test + iki gerçek tx API doğrulaması |
+| Testnet deployment/seed tx | Salik | B1 | DONE | Chain 10143; iki contract + iki seed tx doğrulandı |
 | Quick Demo + final API UI | Fahad | B2/B3 | IN PROGRESS | Gerçek hashlerle UI |
 | Public backend | Salik | B2/B3 | TODO | HTTPS health/analyze |
 | Public frontend | Fahad | B4 | TODO | HTTPS UI |

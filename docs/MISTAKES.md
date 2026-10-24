@@ -37,3 +37,9 @@ Bu kayıt append-only tutulur; sorun çözülse de geçmiş silinmez.
 - **Denenen çözüm:** Komut `tsx watch --env-file-if-exists=.env.local src/server.ts` olarak sıralandı.
 - **Doğrulama:** Root `npm run dev:backend` komutu Fastify server'ı `127.0.0.1:13001` üzerinde başlattı.
 - **Önleme:** `tsx` subcommand'ini önce, Node uyumlu flag'leri subcommand'den sonra yaz.
+## 2026-10-24 — Public RPC için 1000 blokluk log range'i fazla büyüktü
+
+- **Belirti:** Real-RPC watcher backfill testi `eth_getLogs` çağrısında HTTP 413 döndürdü.
+- **Neden:** İlk varsayılan `WATCH_BLOCK_RANGE=1000`, Monad public RPC request limitine uygun değildi.
+- **Düzeltme:** Varsayılan range 100 bloğa indirildi; checkpoint yalnızca başarılı range sonrası ilerlediği için event kaybı olmadı.
+- **Ders:** Provider limitleri yalnızca dokümandan varsayılmamalı; gerçek endpoint üzerinde bounded backfill doğrulanmalı.

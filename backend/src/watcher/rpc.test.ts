@@ -54,6 +54,30 @@ describe('JsonRpcClient', () => {
     await expect(new JsonRpcClient('https://rpc.example.test', 1_000, rpcFailure).getChainId())
       .rejects.toBeInstanceOf(RpcUnavailableError)
   })
+
+  it('loads block height and range-filtered logs', async () => {
+    const log = {
+      address: `0x${'11'.repeat(20)}`,
+      transactionHash: TX_HASH,
+      blockNumber: '0x2a',
+      logIndex: '0x1',
+      topics: [`0x${'22'.repeat(32)}`],
+      data: '0x',
+    }
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ jsonrpc: '2.0', id: 1, result: '0x2a' }))
+      .mockResolvedValueOnce(jsonResponse({ jsonrpc: '2.0', id: 2, result: [log] }))
+    const client = new JsonRpcClient('https://rpc.example.test', 1_000, fetcher)
+
+    await expect(client.getBlockNumber()).resolves.toBe(42n)
+    await expect(client.getLogs({ fromBlock: 40n, toBlock: 42n, topics: ['0xtopic', null] }))
+      .resolves.toEqual([log])
+    const request = JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body)) as { method: string; params: unknown[] }
+    expect(request).toMatchObject({
+      method: 'eth_getLogs',
+      params: [{ fromBlock: '0x28', toBlock: '0x2a', topics: ['0xtopic', null] }],
+    })
+  })
 })
 
 function jsonResponse(value: unknown): Response {

@@ -7,6 +7,17 @@ export interface RpcLog {
   logIndex: string
 }
 
+export interface RpcFilterLog extends RpcLog {
+  transactionHash: string
+  blockNumber: string
+}
+
+export interface RpcLogFilter {
+  fromBlock: bigint
+  toBlock: bigint
+  topics: Array<string | string[] | null>
+}
+
 export interface RpcReceipt {
   transactionHash: string
   blockNumber: string | null
@@ -17,6 +28,11 @@ export interface RpcReceipt {
 export interface EthereumRpc {
   getChainId(): Promise<number>
   getTransactionReceipt(transactionHash: TransactionHash): Promise<RpcReceipt | null>
+}
+
+export interface WatchRpc extends EthereumRpc {
+  getBlockNumber(): Promise<bigint>
+  getLogs(filter: RpcLogFilter): Promise<RpcFilterLog[]>
 }
 
 export class RpcUnavailableError extends Error {
@@ -60,6 +76,23 @@ export class JsonRpcClient implements EthereumRpc {
       throw new RpcUnavailableError('Monad RPC returned an invalid transaction receipt.')
     }
     return receipt
+  }
+
+  async getBlockNumber(): Promise<bigint> {
+    const result = await this.request<string>('eth_blockNumber', [])
+    return parseHexQuantity(result, 'block number')
+  }
+
+  async getLogs(filter: RpcLogFilter): Promise<RpcFilterLog[]> {
+    const logs = await this.request<unknown>('eth_getLogs', [{
+      fromBlock: toHexQuantity(filter.fromBlock),
+      toBlock: toHexQuantity(filter.toBlock),
+      topics: filter.topics,
+    }])
+    if (!Array.isArray(logs) || !logs.every(isRpcFilterLog)) {
+      throw new RpcUnavailableError('Monad RPC returned invalid log data.')
+    }
+    return logs
   }
 
   private async request<T>(method: string, params: unknown[]): Promise<T> {
@@ -119,6 +152,27 @@ function isRpcReceipt(value: unknown): value is RpcReceipt {
       && typeof log.data === 'string'
       && typeof log.logIndex === 'string'
   })
+}
+
+function isRpcFilterLog(value: unknown): value is RpcFilterLog {
+  if (!isRecord(value)) return false
+  return typeof value.address === 'string'
+    && Array.isArray(value.topics)
+    && value.topics.every((topic) => typeof topic === 'string')
+    && typeof value.data === 'string'
+    && typeof value.logIndex === 'string'
+    && typeof value.transactionHash === 'string'
+    && typeof value.blockNumber === 'string'
+}
+
+function parseHexQuantity(value: string, label: string): bigint {
+  if (!/^0x[0-9a-fA-F]+$/.test(value)) throw new RpcUnavailableError(`Monad RPC returned an invalid ${label}.`)
+  return BigInt(value)
+}
+
+function toHexQuantity(value: bigint): string {
+  if (value < 0n) throw new Error('Block quantity cannot be negative.')
+  return `0x${value.toString(16)}`
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

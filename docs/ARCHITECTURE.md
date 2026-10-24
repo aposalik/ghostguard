@@ -18,7 +18,7 @@ Deterministic Analyzer ── findings ────────┘
 
 ## Uygulama durumu
 
-İlk backend dikey dilimi uygulanmıştır: validated env config, timeout'lu JSON-RPC adapter, receipt/log analyzer ve Fastify health/analyze endpoint'leri. Analyzer fixture/fake RPC ile testlidir; henüz gerçek Monad RPC, deployed sözleşme, DB, watcher loop veya WebSocket kanıtı yoktur. Balance-state check uygulanana kadar bu kanıt `UNKNOWN` kalır.
+Receipt/log analyzer gerçek Monad seed işlemleriyle doğrulanmıştır. Finalized-block polling watcher, SQLite checkpoint/findings ve retry edilebilir email transport uygulanmıştır. Gerçek RPC backfill'i kontrollü suspicious event'i transaction hash girdisi olmadan bulmuştur. Public hosting, gerçek inbox delivery ve WebSocket henüz doğrulanmamıştır. Balance-state check uygulanana kadar bu kanıt `UNKNOWN` kalır.
 
 ## Bileşen sorumlulukları
 

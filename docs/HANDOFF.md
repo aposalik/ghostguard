@@ -31,6 +31,37 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Canonical 400/404/503/500 error shape ve CORS allowlist.
 - 4 dosyada 21 test; lint/typecheck/build geçti.
 
+## Son tamamlanan contract dilimi
+
+- Foundry 1.8.6 kullanılabilir; Solidity 0.8.28 ve optimizer ayarları sabitlendi.
+- `DemoToken` gerçek ERC-20 balance değişimi ve event üretir.
+- `DemoEventOnly` token state değiştirmeden, yalnızca deploy eden owner üzerinden Transfer biçimli event üretir.
+- `forge fmt --check --root contracts` geçti.
+- 3 Foundry testi geçti: gerçek transfer, event-only balance ayrımı ve yetkisiz çağrı reddi.
+
+## Aktif deployment dilimi
+
+- Resmî Monad Testnet endpoint'i `https://testnet-rpc.monad.xyz`, chain ID `10143`; live read-only probe doğrulandı.
+- `DeployAndSeed.s.sol` local ve gerçek RPC üzerinde broadcast edilmeden başarıyla simüle edildi.
+- Simülasyon iki deployment + iki seed çağrısı için 767094 tahmini gas ve yaklaşık 0.154952988 testnet MON üst sınırı verdi.
+- Makinede yalnızca önceki MonVault projesine isimlendirilmiş keystore görüldü; GhostGuard için açık karar olmadan kullanılmadı.
+
+## Tamamlanan testnet doğrulaması
+
+- DemoToken: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`.
+- DemoEventOnly: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
+- Gerçek transfer: `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f` → `VERIFIED_DEMO_TRANSFER`.
+- Event-only: `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4` → `SUSPICIOUS_EVENT`.
+- Dört deployment/seed receipt'i başarılı; gerçek transfer recipient'a `25 GGD` yazdı.
+
+## Aktif P1 watcher/email dilimi
+
+- `TransferWatcher` finalized block range'lerini 100 blokluk parçalarla tarar; monitored addresses hem `from` hem `to` topic'inde aranır.
+- SQLite checkpoint/findings restart sonrası korunur ve canonical event identity ile deduplicate edilir.
+- Email transport Resend-compatible HTTP API kullanır; HTML escape, evidence template ve failed-delivery retry uygulanmıştır.
+- 7 dosyada 30 backend testi geçer; 101 normal + 1 suspicious event, duplicate cycle, provider failure retry ve process restart kapsanır.
+- Real RPC backfill transaction hash girdisi olmadan event-only seed'i otomatik bulup `SUSPICIOUS_EVENT` üretti.
+
 ## Tasarım sınırları
 
 - Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.
@@ -56,16 +87,15 @@ npm run check
 
 ## Blocker'lar
 
-- Foundry kurulu değil.
-- Resmî/doğrulanmış Monad RPC ve chain bilgisi henüz bağlanmadı.
-- Contract implementasyonu, deployment adresleri ve seed tx hash'leri yok.
 - Public backend/frontend URL yok.
+- Email provider credential/verified sender olmadığı için gerçek email gönderimi doğrulanmadı.
+- Findings HTTP/WebSocket delivery uçları henüz yok.
 
 ## Sonraki üç görev
 
-1. **Salik:** Foundry erişimini sağla; `DemoToken` ve `DemoEventOnly` test-first implement et.
-2. **Salik:** İki contract'ı disposable Monad Testnet wallet ile, insan onayından sonra deploy et; iki seed tx oluştur.
-3. **Fahad + Salik:** Public backend ve local/public frontend entegrasyonunu gerçek hash'lerle doğrula.
+1. **Salik:** Public backend'i doğrulanmış RPC/contract config'iyle deploy et.
+2. **Fahad + Salik:** Local/public frontend entegrasyonunu gerçek iki hash'le doğrula.
+3. **P1:** Email provider ile gerçek inbox delivery doğrula; findings HTTP/WebSocket uçlarını tamamla.
 
 ## Resume protokolü
 
