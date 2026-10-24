@@ -14,10 +14,9 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 
 - Repo: `https://github.com/aposalik/ghostguard.git`
 - Yerel: `/Users/abdullahsalik/.openclaw/workspace/Ghostguard`
-- Entegrasyon branch'i: `feature/live-findings`
-- Base: `398851c` (`origin/main`)
+- Entegrasyon PR #9 merge commit'i: `893e01f` (`main`)
 - Frontend dashboard PR #6 sonrası doğrulanmış evidence düzeltmeleri PR #8 ile merge edildi.
-- Local docs deployment commit'i ve findings/WebSocket entegrasyonu bu branch'tedir.
+- Findings/WebSocket entegrasyonu `main` ve public Render servisindedir.
 
 ## Son tamamlanan backend dilimi
 
@@ -79,6 +78,8 @@ GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve
 - Backend aynı endpoint'leri SQLite store ve in-process finding broker üzerinden sağlar.
 - `GET /` Render base URL'sinde servis ve endpoint bilgisini döndürür.
 - Root `npm run check`: frontend 16 test, backend 38 test; lint, typecheck ve production build başarılı.
+- Render deploy `dep-dbe9m8vavr4c73a655a0` live; servis branch'i `main`, health check `/health/live`.
+- Public root, health, iki gerçek analyze cevabı, iki persisted finding ve allowed-origin WebSocket handshake doğrulandı.
 
 ## Tasarım sınırları
 
@@ -105,14 +106,13 @@ npm run check
 
 ## Blocker'lar
 
-- Public frontend URL yok; public backend'in önce integration commit'ine güncellenmesi gerekiyor.
+- Public frontend URL yok; public backend güncel ve live.
 - Kesin frontend origin'i bilinmediği için production CORS allowlist güncellemesi bekliyor.
 
-## Sonraki üç görev
+## Sonraki görevler
 
-1. **Salik:** `feature/live-findings` branch'ini merge et ve Render'ı `main` üzerinden deploy ederek HTTP/WebSocket uçlarını doğrula.
-2. **Fahad + Salik:** Frontend'i public deploy et; origin'i CORS'a ekleyip iki gerçek hash ve live feed ile E2E doğrula.
-3. **Operasyon:** Ücretsiz hostun spin-down ve ephemeral SQLite sınırlamalarını demo akışında belgeleyip doğrula.
+1. **Fahad + Salik:** Frontend'i public deploy et; origin'i CORS'a ekleyip iki gerçek hash ve live feed ile E2E doğrula.
+2. **Operasyon:** Ücretsiz hostun spin-down ve ephemeral SQLite sınırlamalarını demo akışında belgeleyip doğrula.
 
 ## Resume protokolü
 
