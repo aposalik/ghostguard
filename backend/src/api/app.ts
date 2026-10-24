@@ -1,4 +1,5 @@
 import cors from '@fastify/cors'
+import fastifyStatic from '@fastify/static'
 import websocket from '@fastify/websocket'
 import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify'
 import type {
@@ -21,6 +22,7 @@ export interface BuildAppOptions {
   findings?: Pick<FindingStore, 'listFindings'>
   events?: FindingEventSource
   corsOrigins?: string[]
+  frontendDirectory?: string
   logger?: boolean
 }
 
@@ -39,7 +41,13 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     },
   })
 
-  app.get('/', async () => ({
+  if (options.frontendDirectory) {
+    await app.register(fastifyStatic, {
+      root: options.frontendDirectory,
+    })
+  }
+
+  const serviceInfo = {
     name: 'GhostGuard API',
     status: 'ok',
     endpoints: {
@@ -48,7 +56,10 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       findings: '/api/v1/findings',
       events: '/api/v1/events',
     },
-  }))
+  }
+
+  app.get('/api', async () => serviceInfo)
+  if (!options.frontendDirectory) app.get('/', async () => serviceInfo)
 
   app.setErrorHandler((error, request, reply) => {
     if (hasStatusCode(error) && error.statusCode < 500) {
@@ -84,7 +95,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   await app.register(async function eventRoutes(routes) {
     routes.get('/api/v1/events', { websocket: true }, (socket, request) => {
       const origin = request.headers.origin
-      if (origin && !allowedOrigins.has(origin)) {
+      if (origin && !allowedOrigins.has(origin) && !isSameOrigin(origin, request.headers)) {
         socket.close(1008, 'Origin is not allowed.')
         return
       }
@@ -127,6 +138,19 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   })
 
   return app
+}
+
+function isSameOrigin(origin: string, headers: Record<string, string | string[] | undefined>): boolean {
+  const host = headers.host
+  if (!host) return false
+  const forwardedProtocol = firstHeaderValue(headers['x-forwarded-proto'])
+  const protocol = forwardedProtocol ?? 'http'
+  return origin === `${protocol}://${host}`
+}
+
+function firstHeaderValue(value: string | string[] | undefined): string | undefined {
+  const first = Array.isArray(value) ? value[0] : value?.split(',')[0]
+  return first?.trim()
 }
 
 type ParsedFindingsQuery =

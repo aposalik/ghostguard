@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { buildApp } from './api/app.js'
 import { FindingEventBroker } from './api/finding-events.js'
 import { TransactionAnalyzer } from './analyzer/transaction-analyzer.js'
@@ -16,10 +18,12 @@ async function start(): Promise<void> {
   })
   const store = config.watcher.enabled ? new SqliteFindingStore(config.watcher.databaseUrl) : undefined
   const findingEvents = new FindingEventBroker()
+  const frontendDirectory = fileURLToPath(new URL('../../frontend/dist', import.meta.url))
   const app = await buildApp({
     service,
     findings: store,
     events: findingEvents,
+    ...(existsSync(frontendDirectory) ? { frontendDirectory } : {}),
     corsOrigins: config.corsOrigins,
     logger: true,
   })
