@@ -3,7 +3,7 @@ services:
     name: ghostguard-backend
     runtime: node
     repo: https://github.com/aposalik/ghostguard.git
-    branch: feature/backend-analyzer
+    branch: main
     region: frankfurt
     plan: free
     numInstances: 1
@@ -51,3 +51,20 @@ services:
         sync: false
       - key: MONAD_EXPLORER_URL
         value: https://testnet.monadscan.com
+
+  - type: web
+    name: ghostguard-frontend
+    runtime: static
+    repo: https://github.com/aposalik/ghostguard.git
+    branch: main
+    buildCommand: npm ci && npm run build --workspace @ghostguard/frontend
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22.23.1
+      - key: VITE_API_BASE_URL
+        value: https://ghostguard-backend-kmrj.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
