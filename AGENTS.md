@@ -10,8 +10,8 @@ GhostGuard, Monad Testnet üzerindeki transfer biçimli olayları işlem makbuzu
 
 ## Sahiplik
 
-- **Developer A:** `frontend/`, kullanıcı deneyimi, API entegrasyonu, frontend dağıtımı ve demo akışı.
-- **Developer B:** `backend/`, `contracts/`, testnet dağıtımları ve teknik doğrulama.
+- **Fahad (Developer A):** `frontend/`, kullanıcı deneyimi, API entegrasyonu, frontend dağıtımı ve demo akışı.
+- **Salik (Developer B):** `backend/`, `contracts/`, testnet dağıtımları ve teknik doğrulama.
 - **Ortak:** `shared/` ve `docs/API_CONTRACT.md`; değişiklik öncesinde ekipçe anlaşın.
 
 Diğer geliştiricinin alanını açık koordinasyon olmadan değiştirmeyin. Ortak tiplerde kırıcı değişiklik yaparken API belgesini ve tüketicileri aynı PR'da güncelleyin.

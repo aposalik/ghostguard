@@ -16,6 +16,10 @@ Deterministic Analyzer ── findings ────────┘
        └──► HTTP API / WebSocket ──► React Dashboard
 ```
 
+## Uygulama durumu
+
+İlk backend dikey dilimi uygulanmıştır: validated env config, timeout'lu JSON-RPC adapter, receipt/log analyzer ve Fastify health/analyze endpoint'leri. Analyzer fixture/fake RPC ile testlidir; henüz gerçek Monad RPC, deployed sözleşme, DB, watcher loop veya WebSocket kanıtı yoktur. Balance-state check uygulanana kadar bu kanıt `UNKNOWN` kalır.
+
 ## Bileşen sorumlulukları
 
 ### Frontend

@@ -2,60 +2,79 @@
 
 ## Proje özeti
 
-GhostGuard, Monad Testnet'te transfer biçimli olayların gerçek emitter'ını ve işlem durumunu inceleyerek iki kontrollü demo senaryosunu ayırmayı hedefler. Üretim dolandırıcılık tespit ürünü olduğu iddia edilmez.
+GhostGuard, Monad Testnet'te transfer biçimli event'in gerçek emitter'ını ve receipt durumunu inceleyerek kontrollü `DemoToken` ile `DemoEventOnly` senaryolarını ayırır. Üretim fraud detector iddiası yoktur.
 
-## Mevcut MVP hedefi
+## Sahiplik
 
-Gerçek `DemoToken` transferi ile `DemoEventOnly` olayını analyzer üzerinden ayırıp public React dashboard'da 90 saniye içinde göstermek.
+- **Fahad:** `frontend/`, UI/UX, API tüketimi, frontend deploy ve sunum.
+- **Salik:** `backend/`, `contracts/`, RPC/analyzer, testnet ve backend deploy.
+- **Ortak:** `shared/types/index.ts`, `docs/API_CONTRACT.md`.
 
-## Mevcut durum
+## Git durumu
 
 - Repo: `https://github.com/aposalik/ghostguard.git`
-- Yerel dizin: `/Users/abdullahsalik/.openclaw/workspace/Ghostguard`
-- Branch: `feature/frontend-dashboard`
-- Remote base commit: `f361c99`
-- Initialization commit: `feat: initialize GhostGuard monorepo and frontend` (yerel branch; kesin hash için `git log -1`)
-- Pending PR: yok
-- Remote'a push: origin/main ve origin/feature/frontend-dashboard dallarına yapıldı (f4805ec)
+- Yerel: `/Users/abdullahsalik/.openclaw/workspace/Ghostguard`
+- Backend branch: `feature/backend-analyzer`
+- Base: `511a866` (`origin/main`)
+- Backend commit konusu: `feat: add deterministic receipt analyzer API`
+- Backend branch push/PR: yapılmadı
 - Zincir deployment: yok
 
-## Son tamamlanan iş
+## Son tamamlanan backend dilimi
 
-Başlangıç reposu incelendi; monorepo ve doküman source-of-truth'u kuruldu. Frontend foundation hash doğrulama, API adapter, kanıt UI'ı ve responsive tasarımla tamamlandı.
+- Strict env configuration.
+- Timeout'lu ve response-shape doğrulamalı JSON-RPC adapter.
+- Deterministik receipt/log analyzer.
+- Transfer topic/from/to/amount decoding.
+- Trusted DemoToken/EventOnly config'ine göre verified/suspicious/review ayrımı.
+- Fastify `GET /health` ve `POST /api/v1/transactions/analyze`.
+- Canonical 400/404/503/500 error shape ve CORS allowlist.
+- 4 dosyada 21 test; lint/typecheck/build geçti.
 
-## Önemli yollar
+## Tasarım sınırları
 
-- `shared/types/index.ts`: canonical API tipleri
-- `docs/API_CONTRACT.md`: endpoint sözleşmesi
-- `docs/ARCHITECTURE.md`: analyzer/watcher tasarımı
-- `frontend/src/services/api.ts`: frontend HTTP adaptörü
-- `docs/PLAN.md`: sahiplik ve öncelikler
+- Request içindeki `expectedTokenAddress` server-side trusted config'i override etmez.
+- Trusted config yoksa request adresi comparison context olabilir, verified kararı üretmez.
+- Reverted receipt için findings boş kalır; başarı uydurulmaz.
+- Balance-delta kontrolü henüz yok; ilgili check `UNKNOWN`.
+- Unknown emitter `NEEDS_REVIEW`; fraud etiketi verilmez.
 
-## Doğrulanmış komutlar
+## Çalıştırma
 
 ```bash
 npm install
-npm audit --audit-level=moderate  # 0 vulnerability
-npm run check                     # lint + typecheck + 3 test + production build geçti
-npm run dev --workspace @ghostguard/frontend -- --host 0.0.0.0 --port 4173
-curl http://127.0.0.1:4173/       # HTTP 200
+# MONAD_RPC_URL ve gerekli public config'i güvenli environment üzerinden sağla
+npm run dev:backend
 ```
 
-Headless Chrome ile desktop ve 500 px responsive screenshot'ları görsel olarak kontrol edildi.
+Doğrulama:
 
-## Bilinen sorunlar
+```bash
+npm audit --audit-level=moderate
+npm run check
+```
+
+## Blocker'lar
 
 - Foundry kurulu değil.
-- Backend ve sözleşme implementasyonu yok.
-- RPC, testnet address/hash ve deployment URL'leri yok.
-- Varsayılan Git HTTPS trust path'i bu hostta hata verdi; TLS kapatılmadan ortam trust bundle'ı kullanıldı.
+- Resmî/doğrulanmış Monad RPC ve chain bilgisi henüz bağlanmadı.
+- Contract implementasyonu, deployment adresleri ve seed tx hash'leri yok.
+- Public backend/frontend URL yok.
 
 ## Sonraki üç görev
 
-1. **Salik (Developer B):** Foundry ile `DemoToken` ve `DemoEventOnly` testlerini yazıp sözleşmeleri implement et ve testnet'e deploy et.
-2. **Salik (Developer B):** Fixture tabanlı analyzer + `POST /api/v1/transactions/analyze` endpoint'ini ortak tiplere göre oluştur.
-3. **Fahad (Developer A):** GitHub issues üzerinden Faz F1 (Quick Demo Switcher & Live Monitor) ve Faz F2 (API entegrasyonu + fallback resilience) geliştir; ardından Vercel üzerinde public frontend deployment yap.
+1. **Salik:** Foundry erişimini sağla; `DemoToken` ve `DemoEventOnly` test-first implement et.
+2. **Salik:** İki contract'ı disposable Monad Testnet wallet ile, insan onayından sonra deploy et; iki seed tx oluştur.
+3. **Fahad + Salik:** Public backend ve local/public frontend entegrasyonunu gerçek hash'lerle doğrula.
 
 ## Resume protokolü
 
-`AGENTS.md` → `docs/PROJECT_CONTEXT.md` → bu dosya → `docs/STATUS.md` → `docs/PLAN.md` → `docs/API_CONTRACT.md` okuyun. Sonra `git status --short --branch`, `git log -5 --oneline` ve ilgili testleri kontrol edin. Diğer geliştiricinin dizinini koordinasyonsuz değiştirmeyin.
+`AGENTS.md` → `docs/PROJECT_CONTEXT.md` → bu dosya → `docs/STATUS.md` → `docs/PLAN.md` → `docs/API_CONTRACT.md` okuyun. Sonra:
+
+```bash
+git status --short --branch
+git log -5 --oneline --decorate
+npm run check
+```
+
+Diğer geliştiricinin owned dizinini koordinasyonsuz değiştirmeyin.

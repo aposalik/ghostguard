@@ -1,6 +1,6 @@
 # Contracts çalışma alanı
 
-**Sahip:** Developer B
+**Sahip:** Salik (@aposalik, Developer B)
 
 Burada iki yeni ve eğitim amaçlı testnet sözleşmesi geliştirilecektir:
 

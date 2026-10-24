@@ -28,3 +28,12 @@ Bu kayıt append-only tutulur; sorun çözülse de geçmiş silinmez.
 - **Denenen çözüm:** `npm run dev --workspace @ghostguard/frontend -- --host 0.0.0.0 --port 4173` doğrudan workspace komutu kullanıldı.
 - **Doğrulama:** Vite hazır oldu ve HTTP kontrolü 200 döndü.
 - **Önleme:** Custom Vite argümanları gerektiğinde workspace scriptini doğrudan çağır.
+
+## 2026-10-24 — `tsx watch` ve Node env flag sırası
+
+- **Bileşen:** Backend local development scripti
+- **Belirti:** `ERR_MODULE_NOT_FOUND` ile `backend/watch` modülü aranıyordu.
+- **Kök neden:** `tsx --env-file-if-exists=.env.local watch ...` sırası, `watch` kelimesini subcommand yerine entrypoint gibi yorumladı.
+- **Denenen çözüm:** Komut `tsx watch --env-file-if-exists=.env.local src/server.ts` olarak sıralandı.
+- **Doğrulama:** Root `npm run dev:backend` komutu Fastify server'ı `127.0.0.1:13001` üzerinde başlattı.
+- **Önleme:** `tsx` subcommand'ini önce, Node uyumlu flag'leri subcommand'den sonra yaz.

@@ -19,9 +19,9 @@ GhostGuard bilinmeyen her token'ı dolandırıcılık olarak etiketlemez; belirs
 ## Monorepo
 
 ```text
-frontend/   React + Vite + TypeScript kullanıcı arayüzü (Developer A)
-backend/    İzleyici, analiz motoru ve API alanı (Developer B)
-contracts/  Eğitim amaçlı Solidity sözleşmeleri (Developer B)
+frontend/   React + Vite + TypeScript kullanıcı arayüzü (Fahad)
+backend/    JSON-RPC, deterministik analyzer ve Fastify API (Salik)
+contracts/  Eğitim amaçlı Solidity sözleşmeleri (Salik)
 shared/     Sürüm kontrollü API tipleri (ortak sahiplik)
 docs/       Mimari, plan, durum, güvenlik ve devir belgeleri
 ```
@@ -32,11 +32,17 @@ Gereksinimler: Node.js 22+ ve npm 10+. Sözleşme geliştirme aşamasında Found
 
 ```bash
 npm install
-cp .env.example .env.local
-npm run dev
+npm run dev:frontend
 ```
 
-Frontend varsayılan olarak `http://localhost:5173` üzerinde açılır. Backend hazır değilse arayüz bunu açıkça belirtir; sahte analiz sonucu üretmez.
+Frontend varsayılan olarak `http://localhost:5173` üzerinde açılır. Backend için public olmayan yerel yapılandırmayı ignored `backend/.env.local` dosyasında veya host environment'ında sağlayın:
+
+```bash
+cp .env.example backend/.env.local
+npm run dev:backend
+```
+
+Backend varsayılan olarak `http://localhost:3000` üzerinde açılır. `MONAD_RPC_URL` zorunludur. Gerçek RPC/deployment olmadan uygulama bulgu uydurmaz.
 
 ## Doğrulama
 

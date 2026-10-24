@@ -1,55 +1,76 @@
 # Güncel Durum
 
-**Tarih:** 2026-10-24  
-**Aktif branch:** `feature/frontend-dashboard`  
-**Remote başlangıcı:** `f361c99` — yalnızca tek satırlık README içeren initial commit
+**Tarih:** 2026-10-24
+
+**Aktif backend branch:** `feature/backend-analyzer`
+
+**Branch tabanı:** `511a866` (`origin/main`)
+
+**Sahiplik:** Fahad frontend; Salik backend/contracts
 
 ## Çalışan
 
-- Public GitHub reposu yerel `Ghostguard/` dizinine klonlandı.
-- Monorepo dizinleri ve ortak TypeScript API şeması oluşturuldu.
-- React/Vite/strict TypeScript dashboard foundation tamamlandı: hash doğrulama, loading/error/result durumları, kanıt kartları ve responsive layout.
-- Frontend API adapter'ı `/api/v1/transactions/analyze` sözleşmesine bağlı; backend yokken bulgu uydurmak yerine açık hata üretir.
-- Mimari, API, güvenlik, plan ve handoff belgeleri oluşturuldu.
-- Desktop ve 500 px responsive görünüm headless Chrome screenshot'larıyla incelendi; görünür taşma/çakışma bulunmadı.
+### Ortak / frontend baseline
 
-## Kısmi
+- Monorepo, ortak TypeScript API tipleri ve proje belgeleri mevcut.
+- Fahad'ın frontend foundation'ı hash validation, loading/error/result ve responsive layout ile çalışıyor.
+- Bu backend branch'i `frontend/` kodunu değiştirmedi; yalnızca ownership README satırı güncellendi.
 
-- Frontend gerçek backend response'u göstermeye hazır; çalışan backend olmadığı için uçtan uca analiz henüz doğrulanmadı.
-- Backend/contracts alanlarında yalnızca sahiplik ve dizin iskeleti var.
+### Backend ilk dikey dilim
 
-## Çalışmayan / henüz yok
-
-- Foundry (`forge`, `cast`, `anvil`) bu makinede kurulu değil.
-- Backend, watcher, analyzer, SQLite ve WebSocket implementasyonu yok.
-- Solidity sözleşmeleri ve testleri yok.
-- Monad Testnet deployment adresi veya doğrulanmış işlem hash'i yok.
-- Public uygulama/backend URL'si yok.
+- Fastify uygulaması ve CORS allowlist.
+- `GET /health`: RPC chain ID probe, `ok`/`degraded` sonucu.
+- `POST /api/v1/transactions/analyze`: request validation ve canonical error response.
+- Timeout'lu Ethereum JSON-RPC client (`eth_chainId`, `eth_getTransactionReceipt`).
+- Receipt success/revert ayrımı.
+- ERC-20 `Transfer` topic, indexed from/to ve uint256 amount decode.
+- Gerçek `log.address` ile configured `DemoToken` / `DemoEventOnly` karşılaştırması.
+- Unknown emitter için `NEEDS_REVIEW`; otomatik fraud iddiası yok.
+- Malformed upstream receipt ve RPC hataları güvenli `RPC_UNAVAILABLE` yoluna alınır.
 
 ## Doğrulanan komutlar
 
-2026-10-24, `feature/frontend-dashboard`:
+2026-10-24:
 
-- `npm install` — başarılı.
-- `npm audit fix && npm audit --audit-level=moderate` — **0 vulnerability**.
-- `npm run lint` — 0 warning, 0 error.
-- `npm run typecheck` — başarılı.
-- `npm run test` — 1 dosya, 3 test geçti.
-- `npm run build` — Vite production build başarılı; JS 228.80 kB (gzip 71.54 kB), CSS 11.22 kB (gzip 3.37 kB).
-- `curl http://127.0.0.1:4173/` — dev server HTTP 200.
-- Headless Chrome desktop ve 500 px responsive screenshot inspection — layout geçerli.
+```bash
+npm audit --audit-level=moderate
+npm run lint --workspace @ghostguard/backend
+npm run typecheck --workspace @ghostguard/backend
+npm run test --workspace @ghostguard/backend
+npm run build --workspace @ghostguard/backend
+```
+
+Sonuç:
+
+- npm audit: 0 vulnerability.
+- Backend lint: 0 warning / 0 error.
+- Production ve test TypeScript graph'ları geçti.
+- 4 test dosyasında 21 test geçti.
+- Backend production build geçti.
+
+Final root `npm run check` geçti: frontend 3 test + backend 21 test, iki workspace için lint/typecheck/build başarılı. Compiled backend server start edildi; gerçek RPC yapılandırılmadığı durumda `/health` beklenen `503 degraded`, analyze endpoint'i canonical `RPC_UNAVAILABLE` döndürdü.
+
+## Kısmi
+
+- Analyzer fixture/fake RPC ile doğrulandı; gerçek Monad RPC/seed tx integration testi yok.
+- `TOKEN_STATE_SUPPORTS_CLAIM` bilinçli olarak `UNKNOWN`; balance-delta kanıtı henüz uygulanmadı.
+- Frontend endpoint şemasına hazır, ancak gerçek uçtan uca çalışma deployed contracts/backend bekliyor.
+
+## Henüz yok / blocker
+
+1. Foundry (`forge`, `cast`, `anvil`) kurulu değil; B1 sözleşme/test aşaması blocked.
+2. Monad RPC URL ve chain bilgisi resmi kaynaktan doğrulanmadı.
+3. `DemoToken` ve `DemoEventOnly` implement/deploy edilmedi.
+4. Disposable wallet ve zincir işlemi için insan onayı gerekecek.
+5. Contract adresleri, seed tx hash'leri, explorer linkleri ve public backend URL yok.
+6. SQLite watcher/checkpoint/WebSocket P1 kapsamı uygulanmadı.
 
 ## Git/TLS notu
 
-Git HTTPS bağlantısı varsayılan çağrıda yerel issuer hatası verdi. TLS doğrulaması kapatılmadı; mevcut güvenilir bundle ile `GIT_SSL_CAINFO="$SSL_CERT_FILE" git ...` kullanıldığında remote okuması ve clone başarılı oldu. Remote okuması, clone ve push (origin/main, origin/feature/frontend-dashboard) güvenli TLS trust bundle ile başarıyla tamamlandı.
-
-## Blocker'lar
-
-1. Developer B için Foundry kurulumu/erişimi gerekli.
-2. Monad RPC URL'si ve chain ID'si resmi kaynaktan doğrulanmalı.
-3. Zincir işlemleri için disposable testnet wallet ve insan onayı gerekli.
-4. Deployment sağlayıcıları seçilmedi.
+Remote fetch, TLS doğrulaması kapatılmadan mevcut güvenilir bundle ile yapıldı. Backend branch henüz push edilmedi.
 
 ## Hemen sonraki iş
 
-Developer B'nin Foundry tabanlı iki demo sözleşmesini ve analyzer fixture testlerini bağımsız başlatması; Developer A backend endpoint hazır olduğunda gerçek entegrasyon testi ve public frontend deployment yapar.
+- Foundry erişimi sağlanınca B1 contract testlerini başlat.
+- Paralelde mevcut B2 API'yi gerçek Monad RPC + daha sonra B3 seed tx'leriyle doğrula.
+- Fahad, local backend contract'ına karşı F2 entegrasyonunu bağımsız geliştirebilir.

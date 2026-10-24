@@ -9,7 +9,9 @@
     "shared"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace frontend",
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "npm run dev --workspace @ghostguard/frontend",
+    "dev:backend": "npm run dev --workspace @ghostguard/backend",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

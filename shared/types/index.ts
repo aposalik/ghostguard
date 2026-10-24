@@ -76,6 +76,7 @@ export interface HealthResponse {
 export interface ApiErrorResponse {
   error: {
     code:
+      | 'INVALID_REQUEST'
       | 'INVALID_TRANSACTION_HASH'
       | 'TRANSACTION_NOT_FOUND'
       | 'RPC_UNAVAILABLE'
