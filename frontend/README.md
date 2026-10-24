@@ -1,6 +1,6 @@
 # GhostGuard Frontend
 
-Developer A çalışma alanı. React, Vite ve strict TypeScript kullanır.
+**Sahip: Fahad (@MFahadFaisal).** React, Vite ve strict TypeScript kullanır. Salik/backend çalışmaları bu dizini koordinasyonsuz değiştirmez.
 
 ## Komutlar
 

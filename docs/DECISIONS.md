@@ -40,3 +40,33 @@
 **Karar:** API/domain tipleri `frontend/src/types/` içinde kopyalanmaz; `@ghostguard/shared` doğrudan kullanılır.  
 **Neden:** Frontend ve backend şemasının sessizce ayrışmasını önler.  
 **Trade-off:** `shared` değişikliği ortak sahiplik ve koordinasyon gerektirir.
+
+## D-007 — Event-only demo owner-gated kalır
+
+**Tarih:** 2026-10-24
+
+**Karar:** `DemoEventOnly` Transfer biçimli event'i yalnızca deploy eden owner'ın üretmesine izin verir.
+
+**Neden:** Kontrollü testnet kanıtını korur ve üçüncü tarafların demo contract'ını keyfi event üretimi için kullanmasını engeller.
+
+**Trade-off:** Seed event işlemi deployment owner cüzdanıyla imzalanmalıdır.
+
+## D-008 — Watcher finalized HTTP range polling kullanır
+
+**Tarih:** 2026-10-24
+
+**Karar:** P1 watcher, monitored wallet adreslerini Transfer event'inin indexed `from` ve `to` topic'lerinde ayrı `eth_getLogs` sorgularıyla tarar; yalnızca confirmation eşiğinin gerisindeki blokları işler.
+
+**Neden:** Her emitter'ı önceden bilmeden wallet'a referans veren transfer biçimli event'leri yakalar; SQLite checkpoint ve bounded backfill restart/RPC recovery sağlar.
+
+**Trade-off:** Public RPC limitleri nedeniyle range 100 blokla sınırlandırılır ve iki topic pozisyonu için iki sorgu gerekir.
+
+## D-009 — Email delivery bulgudan ayrı ve retry edilebilir
+
+**Tarih:** 2026-10-24
+
+**Karar:** Finding önce SQLite'a idempotent kaydedilir; email başarılı olduktan sonra `alerted_at` yazılır. Provider hatası chain checkpoint'ini geri almaz, unsent alert sonraki cycle'da aynı provider idempotency key'iyle tekrar denenir.
+
+**Neden:** Email kesintisinin zincir indekslemeyi durdurmasını veya event kaybına yol açmasını önler.
+
+**Trade-off:** Provider uzun süre kapalıysa pending alert kuyruğu büyüyebilir; production hostta ölçüm/limit gerekir.
