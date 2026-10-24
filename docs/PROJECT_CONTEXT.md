@@ -18,8 +18,8 @@ Bir sözleşme, gerçek token sözleşmesinde bakiye değiştirmeden `Transfer(a
 
 ## Ekip
 
-- **Developer A (Salik):** frontend, UX, API entegrasyonu, public web deployment ve sunum.
-- **Developer B:** sözleşmeler, watcher/analyzer, backend, testler ve teknik doğrulama.
+- **Developer A (Fahad - @MFahadFaisal):** frontend, UI/UX, responsive tasarım, API entegrasyonu, public web deployment ve demo sunumu.
+- **Developer B (Salik - @aposalik):** sözleşmeler, Foundry testleri, watcher/analyzer, backend API, testnet dağıtımı ve teknik doğrulama.
 - **Ortak sözleşme:** `shared/types/index.ts` ve `docs/API_CONTRACT.md`.
 
 ## Kısıtlar

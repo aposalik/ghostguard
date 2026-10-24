@@ -22,10 +22,10 @@ export function OfflineSimulationBanner({
         <div className="simulation-banner-left">
           <span className="simulation-pulse-dot" aria-hidden="true" />
           <span className="simulation-title">
-            Demo Simulation Mode Active {isBackendOnline === false ? '(Backend offline)' : '(Judge Presets Ready)'}
+            Recorded Demo Mode {isBackendOnline === false ? '(Backend offline)' : '(Judge Presets Ready)'}
           </span>
           <span className="simulation-detail">
-            Serving predetermined realistic fixtures for DemoToken & DemoEventOnly contracts.
+            Serving versioned responses captured from the two real Monad Testnet demo transactions.
           </span>
         </div>
 

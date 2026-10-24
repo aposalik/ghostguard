@@ -31,7 +31,7 @@ export function AppHeader() {
 
         <div className="header-meta">
           <a
-            href="https://testnet.monadexplorer.com"
+            href="https://testnet.monadscan.com"
             target="_blank"
             rel="noopener noreferrer"
             className="network-pill"

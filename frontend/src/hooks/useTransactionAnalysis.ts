@@ -20,7 +20,7 @@ export function useTransactionAnalysis() {
   const [history, setHistory] = useState<SecurityFinding[]>(INITIAL_MONITOR_FINDINGS)
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null)
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
-  const [isSimulationActive, setIsSimulationActive] = useState<boolean>(true)
+  const [isSimulationActive, setIsSimulationActive] = useState<boolean>(false)
 
   // Probe backend health safely on mount
   useEffect(() => {

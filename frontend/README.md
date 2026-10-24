@@ -12,7 +12,7 @@ GhostGuard frontend'i Vercel, Netlify veya Cloudflare Pages üzerinde statik SPA
 - **Build Command**: `npm run build`
 - **Output Directory**: `dist`
 - **Environment Variables**:
-  - `VITE_API_BASE_URL`: Abdullah'ın Fastify backend URL'si (ör. `https://api.ghostguard.xyz` veya yerelde `http://localhost:3001`). Boş bırakıldığında veya sunucu çevrimdışıyken deterministik simülasyon modu (`Demo Simulation Mode Active`) otomatik devreye girer.
+  - `VITE_API_BASE_URL`: GhostGuard Fastify backend URL'si. Production build `frontend/.env.production` üzerinden public Render backend'ine, yerel geliştirme varsayılan olarak `http://localhost:3000` adresine bağlanır. Backend çevrimdışıyken yalnızca iki gerçek demo transaction'ından kaydedilmiş cevaplar açık `Recorded Demo Mode` etiketiyle kullanılabilir.
 
 ### Netlify Dağıtımı
 Proje kökündeki `netlify.toml` otomatik olarak `frontend` dizinini derler ve SPA yönlendirmelerini (`/index.html`) yapılandırır.
@@ -48,9 +48,9 @@ npm run check
 
 1. **Senaryo A (Meşru Transfer)**: `Scenario A: Legitimate Transfer` butonuna tıklandığında doğrulanmış `DemoToken` transfer hash'i yüklenir ve yeşil kalkan rozeti (`VERIFIED_DEMO_TRANSFER`) görüntülenir.
 2. **Senaryo B (Sahte Decoy Olayı)**: `Scenario B: Spoofed Decoy` butonuna tıklandığında `DemoEventOnly` işlem hash'i taranır ve **Emitter Mismatch** uyarı kutusu (`SUSPICIOUS_EVENT`) tetiklenir:
-   > *"Log was emitted by contract 0xDeC040..., NOT the trusted DemoToken contract 0x71C8A1.... No actual token balance changed."*
+   > *"The Transfer-shaped log was emitted by the configured event-only demo contract rather than DemoToken."*
 3. **Canlı İzleme Paneli (Live Monitor)**: Son taranan olaylar listelenir; herhangi bir işleme tıklandığında detaylı kanıt kartı `AnalysisPanel` üzerinde incelenir.
-4. **Monad Explorer Bağlantıları**: Tüm adresler ve hash'ler `https://testnet.monadexplorer.com` doğrudan bağlantıları ve kopyalama butonları (`📋`) içerir.
+4. **Monad Explorer Bağlantıları**: Tüm adresler ve hash'ler `https://testnet.monadscan.com` doğrudan bağlantıları ve kopyalama butonları (`📋`) içerir.
 
 ---
 

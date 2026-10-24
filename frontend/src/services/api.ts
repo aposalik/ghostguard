@@ -17,7 +17,9 @@ export interface WsFindingCreatedMessage {
   data: SecurityFinding
 }
 
-export const DEFAULT_API_BASE_URL = 'http://localhost:3001'
+export const DEFAULT_API_BASE_URL = import.meta.env.PROD
+  ? 'https://ghostguard-backend-kmrj.onrender.com'
+  : 'http://localhost:3000'
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ??
   (typeof window !== 'undefined' && window.location.pathname.startsWith('/api') ? '/api' : DEFAULT_API_BASE_URL)
