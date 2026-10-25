@@ -17,6 +17,27 @@
 - Dashboard gerçek iki Monad transaction'ını Quick Demo olarak kullanır, live API'yi varsayılan seçer ve yalnızca açık etiketli recorded response fallback'i sunar.
 - Backend health, findings geçmişi, WebSocket reconnect/backoff ve HTTP recovery frontend'de uygulanmıştır.
 
+### Portfolio Home + Try It redesign — local branch
+
+- Branch: `feature/home-try-redesign`; henüz push/deploy edilmedi.
+- Yeni `/` Home deneyimi problem, method, shipped proof, detection loop, team ve roadmap bölümleriyle projeyi portfolio formatında anlatır.
+- Canlı Monad analyzer ayrı `/#/try-it` deneyimine taşındı; hash route unified static hostta server rewrite gerektirmez.
+- Home ve Try It ortak acid-lime/deep-olive/orange/cream görsel sistemi, condensed/editorial tipografi, print-grid texture, hard-shadow kartlar ve reduced-motion fallback kullanır.
+- Idle, live feed ve gerçek `SUSPICIOUS_EVENT` result state'i desktop; Home/Try It hero'ları 500 px mobilde görsel olarak doğrulandı.
+- 2026-10-25 local final check: frontend 16 test, backend 45 test, lint/typecheck ve iki production build geçti; npm audit 0 vulnerability.
+- Kullanıcının önceden değiştirdiği `LICENSE` bu branch'te korunur fakat redesign commit kapsamına alınmayacaktır.
+
+### Account Agent Mode — local implementation
+
+- Try It artık transaction-hash-first form yerine account address + Agent Mode toggle kullanır.
+- SQLite `account_watches` ve `account_activities` tabloları watch state ve geçmişi restart sonrasında korur; pause history silmez.
+- Watcher finalized ERC-20 loglarını ve aktivasyon sonrası top-level native transfer/contract call'ları tarar. Internal trace transferları henüz kapsam dışıdır.
+- Activity model direction (`INCOMING`/`OUTGOING`/`SELF`) ile trust verdict'ini (`CONFIRMED`/`SUSPICIOUS`/`NEEDS_REVIEW`/`REVERTED`) ayrı tutar.
+- `PUT /api/v1/monitoring/accounts/:address`, account/activity GET endpointleri ve `activity.created` WebSocket frame'i eklendi.
+- Evidence Inspector animated account graph'tır: incoming green, outgoing yellow, suspicious red, needs-review violet. Stored Transactions listesi SQLite geçmişini gösterir.
+- Geçici SQLite üzerinde iki gerçek Monad logu kalıcı activity olarak doğrulandı: bir confirmed ve bir suspicious; Agent Mode pause/resume sonrasında history count korunarak `2` kaldı.
+- Desktop ve 500 px mobile active-account ekranları görsel incelemeden geçti.
+
 ### Backend ilk dikey dilim
 
 - Fastify uygulaması ve CORS allowlist.
@@ -48,10 +69,12 @@
 ### Monad Testnet deployment ve gerçek API doğrulaması
 
 - `DemoToken`: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`.
-- `DemoEventOnly`: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
+- `DemoEventOnly` (Seed): `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
+- `DemoEventOnly` (Live Spoofer): `0xE8c493C05C08ab458391af1D71e1B8939fd5a392` (Tx: `0x21a8a63f9f0360b8a05266210191dbdceeb3ea2799cffa5ad87b6c2d6ae139b2`).
 - Gerçek transfer tx `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f` başarılı; recipient `25 GGD` aldı.
 - Event-only tx `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4` başarılı; DemoToken balance değiştirmedi.
 - Local backend gerçek RPC üzerinde sırasıyla `VERIFIED_DEMO_TRANSFER` ve `SUSPICIOUS_EVENT` döndürdü.
+- **2026-10-25 100-Transaction Storm Doğrulaması:** `scripts/flood_transactions.py` ile 25 rastgele cüzdan oluşturuldu; 100 adet işlem (40x Spoofed Fake Transfer, 30x Incoming MON, 30x Outgoing MON) paralel olarak 1.74 saniyede Monad Testnet'e broadcast edildi ve 100/100 başarıyla onaylandı. Monitored hesap `0x351deba8041a4359399c5af0e11f8e66ed300492` canlı workbench üzerinde tüm incoming, outgoing ve red suspicious event'leri anlık yakaladı.
 
 ### P1 watcher, persistence ve email altyapısı
 

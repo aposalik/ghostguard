@@ -89,6 +89,63 @@ Sınıflandırmalar:
 Cursor opaque kabul edilir. Varsayılan sıralama `analyzedAt DESC, id DESC` olmalıdır.
 `limit` varsayılan olarak `20`, en az `1`, en fazla `100` değerini alır. Geçersiz limit veya cursor canonical `400 INVALID_REQUEST` cevabı üretir. Watcher kapalıysa endpoint boş sayfa döndürür.
 
+## Account Agent Mode
+
+### `GET /api/v1/monitoring/accounts`
+
+SQLite'taki kalıcı watch kayıtlarını döndürür:
+
+```json
+[
+  {
+    "chainId": 10143,
+    "address": "0x<40-hex-characters>",
+    "enabled": true,
+    "createdAt": "2026-10-25T00:00:00.000Z",
+    "updatedAt": "2026-10-25T00:00:00.000Z"
+  }
+]
+```
+
+### `PUT /api/v1/monitoring/accounts/:address`
+
+Idempotent Agent Mode toggle:
+
+```json
+{ "enabled": true }
+```
+
+`false` watch'ı durdurur fakat önceden kaydedilen activity satırlarını silmez. Adresler backend'de lowercase normalize edilir.
+
+### `GET /api/v1/monitoring/accounts/:address/activities?limit=100&cursor=<opaque>`
+
+```json
+{
+  "items": [
+    {
+      "id": "10143:0x<hash>:2:watch:0x<address>",
+      "chainId": 10143,
+      "watchedAddress": "0x<address>",
+      "transactionHash": "0x<hash>",
+      "blockNumber": "73787276",
+      "direction": "OUTGOING",
+      "kind": "TOKEN_TRANSFER",
+      "verdict": "SUSPICIOUS",
+      "counterpartyAddress": "0x<address>",
+      "assetAddress": "0x<emitter>",
+      "amount": "25000000000000000000",
+      "finding": { "...SecurityFinding": "aynı shared type" },
+      "observedAt": "2026-10-25T00:00:00.000Z"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+Direction: `INCOMING`, `OUTGOING`, `SELF`. Kind: `NATIVE_TRANSFER`, `CONTRACT_CALL`, `TOKEN_TRANSFER`. Verdict: `CONFIRMED`, `SUSPICIOUS`, `NEEDS_REVIEW`, `REVERTED`. Direction ile güven verdict'i bağımsızdır; örneğin outgoing bir transfer hem sarı/confirmed hem kırmızı/suspicious olabilir ve kırmızı verdict önceliklidir.
+
+Top-level transaction listener ilk aktivasyon anından itibaren ileriye doğru çalışır; `WATCH_START_BLOCK` yalnızca log finding backfill'i içindir. Internal transfers henüz trace edilmez.
+
 ## `WS /api/v1/events`
 
 Sunucudan istemciye mesaj:
@@ -100,7 +157,16 @@ Sunucudan istemciye mesaj:
 }
 ```
 
-Endpoint watcher'ın SQLite'a yeni kaydettiği bulguları yayınlar. Frontend reconnect/backoff uygular; HTTP endpoint bağlantı kesintilerinde kurtarma ve geçmiş kaynağıdır. Browser `Origin` değeri HTTP CORS allowlist'iyle aynı listeden doğrulanır.
+Account activity frame'i:
+
+```json
+{
+  "type": "activity.created",
+  "data": { "...AccountActivity": "shared type ile aynı" }
+}
+```
+
+Endpoint watcher'ın SQLite'a yeni kaydettiği bulguları ve account activity kayıtlarını yayınlar. Frontend reconnect/backoff uygular; HTTP endpoint bağlantı kesintilerinde kurtarma ve geçmiş kaynağıdır. Browser `Origin` değeri HTTP CORS allowlist'iyle aynı listeden doğrulanır.
 
 ## `GET /api/v1/agents/status`
 
@@ -142,7 +208,7 @@ Endpoint watcher'ın SQLite'a yeni kaydettiği bulguları yayınlar. Frontend re
 
 ## Hata şekli
 
-HTTP durumları: `400` geçersiz JSON/body/hash/address, `404` receipt bulunamayan işlem, `503` RPC erişim/sağlık sorunu, `500` beklenmeyen hata. Hata kodları: `INVALID_REQUEST`, `INVALID_TRANSACTION_HASH`, `TRANSACTION_NOT_FOUND`, `RPC_UNAVAILABLE`, `INTERNAL_ERROR`.
+HTTP durumları: `400` geçersiz JSON/body/hash/address, `404` receipt bulunamayan işlem, `503` RPC erişim/sağlık sorunu, `500` beklenmeyen hata. Hata kodları: `INVALID_REQUEST`, `INVALID_ACCOUNT_ADDRESS`, `INVALID_TRANSACTION_HASH`, `TRANSACTION_NOT_FOUND`, `RPC_UNAVAILABLE`, `INTERNAL_ERROR`.
 
 ```json
 {

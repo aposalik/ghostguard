@@ -12,6 +12,15 @@ export interface RpcFilterLog extends RpcLog {
   blockNumber: string
 }
 
+export interface RpcBlockTransaction {
+  hash: TransactionHash
+  from: string
+  to: string | null
+  value: string
+  input: string
+  blockNumber: string
+}
+
 export interface RpcLogFilter {
   fromBlock: bigint
   toBlock: bigint
@@ -33,6 +42,7 @@ export interface EthereumRpc {
 export interface WatchRpc extends EthereumRpc {
   getBlockNumber(): Promise<bigint>
   getLogs(filter: RpcLogFilter): Promise<RpcFilterLog[]>
+  getBlockTransactions(blockNumber: bigint): Promise<RpcBlockTransaction[]>
 }
 
 export class RpcUnavailableError extends Error {
@@ -93,6 +103,14 @@ export class JsonRpcClient implements EthereumRpc {
       throw new RpcUnavailableError('Monad RPC returned invalid log data.')
     }
     return logs
+  }
+
+  async getBlockTransactions(blockNumber: bigint): Promise<RpcBlockTransaction[]> {
+    const block = await this.request<unknown>('eth_getBlockByNumber', [toHexQuantity(blockNumber), true])
+    if (!isRecord(block) || !Array.isArray(block.transactions) || !block.transactions.every(isRpcBlockTransaction)) {
+      throw new RpcUnavailableError('Monad RPC returned invalid block transaction data.')
+    }
+    return block.transactions
   }
 
   private async request<T>(method: string, params: unknown[]): Promise<T> {
@@ -163,6 +181,21 @@ function isRpcFilterLog(value: unknown): value is RpcFilterLog {
     && typeof value.logIndex === 'string'
     && typeof value.transactionHash === 'string'
     && typeof value.blockNumber === 'string'
+}
+
+function isRpcBlockTransaction(value: unknown): value is RpcBlockTransaction {
+  if (!isRecord(value)) return false
+  return typeof value.hash === 'string'
+    && /^0x[a-fA-F0-9]{64}$/.test(value.hash)
+    && typeof value.from === 'string'
+    && /^0x[a-fA-F0-9]{40}$/.test(value.from)
+    && (value.to === null || (typeof value.to === 'string' && /^0x[a-fA-F0-9]{40}$/.test(value.to)))
+    && typeof value.value === 'string'
+    && /^0x[0-9a-fA-F]+$/.test(value.value)
+    && typeof value.input === 'string'
+    && /^0x[0-9a-fA-F]*$/.test(value.input)
+    && typeof value.blockNumber === 'string'
+    && /^0x[0-9a-fA-F]+$/.test(value.blockNumber)
 }
 
 function parseHexQuantity(value: string, label: string): bigint {

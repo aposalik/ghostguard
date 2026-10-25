@@ -1,4 +1,8 @@
-export function AppHeader() {
+interface AppHeaderProps {
+  currentPage: 'home' | 'try-it'
+}
+
+export function AppHeader({ currentPage }: AppHeaderProps) {
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -26,8 +30,15 @@ export function AppHeader() {
           <span className="brand-title">
             Ghost<span className="brand-accent">Guard</span>
           </span>
-          <span className="brand-badge">MONAD HACKATHON</span>
+          <span className="brand-badge">ON-CHAIN FORENSICS</span>
         </a>
+
+        <nav className="primary-nav" aria-label="Primary navigation">
+          <a href="/#about">About</a>
+          <a href="/#method">Method</a>
+          <a href="/#proof">Proof</a>
+          <a href="/#team">Team</a>
+        </nav>
 
         <div className="header-meta">
           <a
@@ -42,13 +53,12 @@ export function AppHeader() {
             <span className="chain-id-tag">10143</span>
           </a>
           <a
-            className="header-link"
-            href="https://github.com/aposalik/ghostguard"
-            target="_blank"
-            rel="noopener noreferrer"
+            className={`header-link nav-try-link ${currentPage === 'try-it' ? 'is-current' : ''}`}
+            href="#/try-it"
+            aria-current={currentPage === 'try-it' ? 'page' : undefined}
           >
-            <span>GitHub</span>
-            <span className="ext-icon" aria-hidden="true">↗</span>
+            <span>Try it</span>
+            <span className="ext-icon" aria-hidden="true">→</span>
           </a>
         </div>
       </div>

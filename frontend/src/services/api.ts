@@ -1,10 +1,14 @@
 import type {
+  AccountActivitiesPage,
+  AccountActivity,
   AgentStatusResponse,
   AnalyzeTransactionRequest,
   AnalyzeTransactionResponse,
   ApiErrorResponse,
   FindingsPage,
   HealthResponse,
+  HexAddress,
+  MonitoredAccount,
   SecurityFinding,
   TransactionHash,
 } from '@ghostguard/shared'
@@ -16,6 +20,13 @@ export interface WsFindingCreatedMessage {
   type: 'finding.created'
   data: SecurityFinding
 }
+
+export interface WsActivityCreatedMessage {
+  type: 'activity.created'
+  data: AccountActivity
+}
+
+export type WsEventMessage = WsFindingCreatedMessage | WsActivityCreatedMessage
 
 export const DEFAULT_API_BASE_URL = import.meta.env.PROD
   ? ''
@@ -45,6 +56,7 @@ export function getEventsWsUrl(): string {
 }
 
 export const TRANSACTION_HASH_PATTERN = /^0x[a-fA-F0-9]{64}$/
+export const ACCOUNT_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
 
 export class ApiRequestError extends Error {
   readonly status: number
@@ -62,6 +74,10 @@ export class ApiRequestError extends Error {
 
 export function isTransactionHash(value: string): value is TransactionHash {
   return TRANSACTION_HASH_PATTERN.test(value.trim())
+}
+
+export function isAccountAddress(value: string): value is HexAddress {
+  return ACCOUNT_ADDRESS_PATTERN.test(value.trim())
 }
 
 function mapHttpError(status: number, serverMessage?: string, serverCode?: string): { message: string; code: string } {
@@ -210,6 +226,77 @@ export async function fetchRecentFindings(limit = 20, cursor?: string): Promise<
     if (cause instanceof ApiRequestError) throw cause
     throw new ApiRequestError(
       'The GhostGuard backend is not reachable for findings feed.',
+      0,
+      'NETWORK_DISCONNECTED',
+    )
+  }
+}
+
+export async function fetchMonitoredAccounts(): Promise<MonitoredAccount[]> {
+  return fetchMonitoringJson<MonitoredAccount[]>('/api/v1/monitoring/accounts')
+}
+
+export async function setAccountMonitoring(address: string, enabled: boolean): Promise<MonitoredAccount> {
+  const normalizedAddress = address.trim().toLowerCase()
+  if (!isAccountAddress(normalizedAddress)) {
+    throw new ApiRequestError(
+      'Account address must start with 0x and contain exactly 40 hexadecimal characters.',
+      400,
+      'INVALID_ACCOUNT_ADDRESS',
+    )
+  }
+
+  return fetchMonitoringJson<MonitoredAccount>(
+    `/api/v1/monitoring/accounts/${normalizedAddress}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ enabled }),
+    },
+  )
+}
+
+export async function fetchAccountActivities(
+  address: string,
+  limit = 50,
+  cursor?: string,
+): Promise<AccountActivitiesPage> {
+  const normalizedAddress = address.trim().toLowerCase()
+  if (!isAccountAddress(normalizedAddress)) {
+    throw new ApiRequestError(
+      'Account address must start with 0x and contain exactly 40 hexadecimal characters.',
+      400,
+      'INVALID_ACCOUNT_ADDRESS',
+    )
+  }
+
+  const browserOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+  const url = new URL(
+    `${API_BASE_URL}/api/v1/monitoring/accounts/${normalizedAddress}/activities`,
+    browserOrigin,
+  )
+  url.searchParams.set('limit', String(limit))
+  if (cursor) url.searchParams.set('cursor', cursor)
+  return fetchMonitoringJson<AccountActivitiesPage>(url.toString())
+}
+
+async function fetchMonitoringJson<T>(pathOrUrl: string, init?: RequestInit): Promise<T> {
+  const url = pathOrUrl.startsWith('http') ? pathOrUrl : `${API_BASE_URL}${pathOrUrl}`
+  try {
+    const response = await fetch(url, init ?? { method: 'GET', headers: { Accept: 'application/json' } })
+    if (!response.ok) {
+      const payload = await readError(response)
+      throw new ApiRequestError(
+        payload?.error.message ?? `Monitoring request failed with HTTP ${response.status}.`,
+        response.status,
+        payload?.error.code ?? 'INTERNAL_ERROR',
+      )
+    }
+    return (await response.json()) as T
+  } catch (cause) {
+    if (cause instanceof ApiRequestError) throw cause
+    throw new ApiRequestError(
+      'The GhostGuard account monitor is not reachable.',
       0,
       'NETWORK_DISCONNECTED',
     )

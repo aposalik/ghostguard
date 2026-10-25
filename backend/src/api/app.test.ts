@@ -215,6 +215,7 @@ describe('GhostGuard API', () => {
     })
 
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173')
+    expect(allowed.headers['access-control-allow-methods']).toContain('PUT')
     expect(denied.headers['access-control-allow-origin']).toBeUndefined()
   })
 

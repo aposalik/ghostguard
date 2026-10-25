@@ -39,12 +39,14 @@ describe('loadConfig', () => {
     })).toThrow('TRUSTED_DEMO_TOKEN_ADDRESS must be a 20-byte hex address.')
   })
 
-  it('requires monitored wallets for an enabled watcher and email credentials for delivery', () => {
-    expect(() => loadConfig({
-      MONAD_RPC_URL: 'https://rpc.example.test',
-      WATCH_ENABLED: 'true',
-    })).toThrow('MONITORED_WALLET_ADDRESSES is required')
+  it('enables dynamic account monitoring by default without requiring a seeded wallet', () => {
+    const config = loadConfig({ MONAD_RPC_URL: 'https://rpc.example.test' })
 
+    expect(config.watcher.enabled).toBe(true)
+    expect(config.watcher.monitoredWallets).toEqual([])
+  })
+
+  it('requires email credentials for delivery', () => {
     expect(() => loadConfig({
       MONAD_RPC_URL: 'https://rpc.example.test',
       EMAIL_ENABLED: 'true',
