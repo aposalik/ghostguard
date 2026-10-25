@@ -1,289 +1,261 @@
-# GhostGuard 🛡️
-### Real-Time ERC-20 Event Spoofing Detection & Proof-Grounded Verification Engine for Monad
+# GhostGuard
 
-[![Monad Testnet](https://img.shields.io/badge/Monad%20Testnet-Chain%2010143-6E54FF?style=for-the-badge&logo=ethereum&logoColor=white)](https://testnet.monadscan.com)
-[![Status](https://img.shields.io/badge/Status-Live%20on%20Render-brightgreen?style=for-the-badge)](https://ghostguard-unified.onrender.com)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Foundry](https://img.shields.io/badge/Contracts-Foundry%20%7C%20Solidity%200.8.28-orange?style=for-the-badge)](contracts/)
-[![TypeScript](https://img.shields.io/badge/Stack-TypeScript%20%7C%20Fastify%20%7C%20React%2019-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](shared/)
+### Kanıt gelmeden güvenme.
 
-GhostGuard is an on-chain security monitoring tool and deterministic transaction analyzer built for the **Monad Blitz Ankara (October 2026)** hackathon. It detects and explains **ERC-20 Event Spoofing** and deceptive transfer claims by auditing transaction receipts, log emitters, and token contracts against verifiable blockchain state.
+[![Monad Testnet](https://img.shields.io/badge/Monad%20Testnet-10143-6E54FF?style=flat-square&logo=ethereum&logoColor=white)](https://docs.monad.xyz/developer-essentials/testnet)
+[![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-111827?style=flat-square)](LICENSE)
 
-In **Try It → Agent Mode**, enter a Monad account address to persistently follow finalized incoming/outgoing activity. The Evidence Inspector draws an animated account graph—green incoming, yellow outgoing, red only for deterministically suspicious evidence—and keeps the transaction ledger in SQLite when monitoring is paused or the service restarts.
+GhostGuard, Monad Testnet üzerindeki transaction receipt'lerini, event emitter adreslerini ve ERC-20 `Transfer` loglarını deterministik kanıtlarla denetleyen bir on-chain güvenlik izleme ve analiz platformudur.
 
----
+Bir transaction başarılı olabilir ve `Transfer(address,address,uint256)` biçiminde bir event yayımlayabilir. Ancak event'i yayımlayan sözleşme, beklenen token sözleşmesi olmayabilir. GhostGuard bu ayrımı görünür hale getirir:
 
-## 🌐 Live Deployments & Testnet Proofs
+- **Gerçek transaction** ile **yanıltıcı token transfer iddiasını** birbirinden ayırır.
+- Kullanıcı girdisine veya tahmine değil, RPC'den alınan receipt ve loglara dayanır.
+- Kanıt yetersizse fraud iddiası üretmez; `NEEDS_REVIEW` döndürür.
+- Agent Mode ile bir hesabın finalized incoming/outgoing aktivitesini SQLite'a kaydeder ve realtime olarak gösterir.
 
-| Resource | Value / Link | Description |
-|---|---|---|
-| **Live Unified App** | [ghostguard-unified.onrender.com](https://ghostguard-unified.onrender.com) | Production React Dashboard & Unified Fastify Service |
-| **API Health Check** | [/health/live](https://ghostguard-unified.onrender.com/health/live) | Liveness Probe (`status: "ok"`) |
-| **Monad Chain ID** | `10143` | Official Monad Testnet |
-| **Honest DemoToken (`GGD`)** | [`0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`](https://testnet.monadscan.com/address/0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639) | Standard ERC-20 with real balance mutations |
-| **Decoy DemoEventOnly** | [`0xa7836d1245593d16929a3Eea3Aa34461EF08F474`](https://testnet.monadscan.com/address/0xa7836d1245593d16929a3Eea3Aa34461EF08F474) | Decoy contract emitting transfer events with 0 balance mutation |
-| **Legitimate Transfer Tx** | [`0x22b9eb3a...df57f6d1f`](https://testnet.monadscan.com/tx/0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f) | Verified transfer: recipient received 25 GGD (`VERIFIED_DEMO_TRANSFER`) |
-| **Spoofed Decoy Event Tx** | [`0x321987f4...cbde07c4`](https://testnet.monadscan.com/tx/0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4) | Spoofed transfer: receipt success, emitter mismatch, 0 tokens moved (`SUSPICIOUS_EVENT`) |
+> [!IMPORTANT]
+> Bu proje bir hackathon/MVP demonstrasyonudur. Public deployment ve demo sözleşmeleri vardır; ancak production seviyesinde multi-user ownership, authentication, quota ve kalıcı disk stratejisi henüz tamamlanmamıştır.
 
 ---
 
-## 🎯 The Core Problem: The "Successful Receipt" Illusion
+## İçindekiler
 
-In Web3, wallets (like MetaMask or Rabby) and block explorers announce token transfers by indexing standard ERC-20 `Transfer(address,address,uint256)` event signatures (`0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`).
-
-> [!CAUTION]
-> **Any smart contract on EVM can emit that exact same `Transfer` event.**
-> An attacker or decoy contract can emit `Transfer(Alice, Bob, 1000 GGD)` without holding any tokens or changing any balances.
->
-> * **Transaction Status:** `SUCCESS (1)` ✅
-> * **Explorer / Wallet Notification:** *"You received 1,000 GGD from 0x..."* 🔔
-> * **Actual Token Balance Transferred:** **$0.00 (Zero tokens moved!)** ❌
-
-This deceptive technique is the foundational mechanism behind **address-poisoning scams**, fake payment receipts, and false-transfer fraud. **GhostGuard exists to expose this illusion.**
-
----
-
-## 🏗️ System Architecture & Data Flow
-
-GhostGuard implements a decoupled, event-driven security pipeline spanning from on-chain RPC ingestion to client-side real-time monitoring:
-
-```mermaid
-flowchart TD
-    subgraph Monad ["Monad Testnet (Chain ID 10143)"]
-        RPC["Monad JSON-RPC Node\n(testnet-rpc.monad.xyz)"]
-        DT["DemoToken Contract\n(0x21A4...7639)"]
-        DE["DemoEventOnly Contract\n(0xa783...F474)"]
-    end
-
-    subgraph Backend ["GhostGuard Backend & Ingestion Engine"]
-        W["Account Activity Watcher\n(Logs + Full Blocks)"]
-        DB[("SQLite Persistence\n(Watches + Activities + Findings)")]
-        A["Deterministic Analyzer\n(Receipt & Emitter Audit)"]
-        EM["Email Alerting Engine\n(Resend API / Idempotent Queue)"]
-        WS["WebSocket Server\n(/api/v1/events)"]
-        REST["REST Endpoints\n(Analysis + Account Monitoring)"]
-    end
-
-    subgraph Frontend ["GhostGuard Dashboard (React 19 + Vite)"]
-        UI["Animated Evidence Graph"]
-        Ledger["Persistent Transaction Ledger"]
-    end
-
-    DT -.->|Real Transfers| RPC
-    DE -.->|Spoofed Events| RPC
-
-    RPC -->|eth_getLogs & Receipts| W
-    W -->|Checkpoints & Findings| DB
-    W -->|New Logs| A
-
-    A -->|Validate Emitter & Topics| A
-    A -->|Suspicious Events| EM
-    A -->|Broadcast finding.created + activity.created| WS
-    A -->|Query Results| REST
-
-    REST -->|Typed Responses| UI
-    WS -->|Live Finding Stream| UI
-    Preset -->|Trigger Legitimate vs Decoy| UI
-```
+- [Öne çıkan yetenekler](#öne-çıkan-yetenekler)
+- [Canlı demo ve kanıtlar](#canlı-demo-ve-kanıtlar)
+- [Hızlı başlangıç](#hızlı-başlangıç)
+- [Nasıl çalışır](#nasıl-çalışır)
+- [Mimari](#mimari)
+- [Agent Mode](#agent-mode)
+- [Analiz sınıflandırmaları](#analiz-sınıflandırmaları)
+- [Monorepo yapısı](#monorepo-yapısı)
+- [API özeti](#api-özeti)
+- [Konfigürasyon](#konfigürasyon)
+- [Test ve doğrulama](#test-ve-doğrulama)
+- [Deployment](#deployment)
+- [Güvenlik ve sınırlar](#güvenlik-ve-sınırlar)
+- [Bilinen sınırlamalar](#bilinen-sınırlamalar)
+- [Katkı](#katkı)
+- [Lisans](#lisans)
 
 ---
 
-## 🔬 Transaction Verification Pipeline
+## Öne çıkan yetenekler
 
-When a transaction is analyzed, GhostGuard executes a deterministic verification lifecycle without relying on probabilistic machine learning or hallucinating models:
+### Deterministik receipt analizi
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as User / Client
-    participant API as GhostGuard Fastify API
-    participant RPC as Monad JSON-RPC
-    participant Analyzer as Deterministic Analyzer
-    participant DB as SQLite Store
-    participant Resend as Resend Email Service
+`POST /api/v1/transactions/analyze` endpoint'i transaction receipt'ini RPC'den yeniden alır ve şu kanıtları değerlendirir:
 
-    User->>API: POST /api/v1/transactions/analyze { txHash, expectedToken? }
-    API->>RPC: eth_getTransactionReceipt(txHash)
-    RPC-->>API: Transaction Receipt & Logs
+1. Receipt var mı?
+2. Transaction başarılı mı, revert mi?
+3. Log `Transfer` signature'ına uyuyor mu?
+4. `from`, `to` ve `amount` alanları decode edilebiliyor mu?
+5. Log emitter adresi trusted token adresiyle eşleşiyor mu?
+6. Event kontrollü event-only demo sözleşmesinden mi geliyor?
 
-    alt Receipt Status == 0 (Reverted)
-        API-->>User: FAILED_TRANSACTION
-    else Receipt Status == 1 (Success)
-        API->>Analyzer: Evaluate Logs & Emitter Topics
-        Analyzer->>Analyzer: Match Topic 0 == 0xddf252ad...
-        Analyzer->>Analyzer: Compare actualEmitter vs expectedToken
+### Kalıcı Agent Mode
 
-        alt Emitter == Trusted DemoToken
-            Analyzer-->>API: VERIFIED_DEMO_TRANSFER (Legitimate)
-        else Emitter == Decoy (DemoEventOnly)
-            Analyzer-->>API: SUSPICIOUS_EVENT (Spoofed Decoy)
-            API->>DB: Record Finding & Queue Alert
-            API->>Resend: Send Email Notification to Monitored Wallets
-        else Unknown Contract
-            Analyzer-->>API: NEEDS_REVIEW (Unknown / Insufficient Proof)
-        end
-        API-->>User: Canonical SecurityFinding Response
-    end
-```
+Try It ekranında bir public EVM account adresi izlenebilir:
 
----
+- finalized ERC-20 `Transfer` logları
+- aktivasyon sonrasındaki top-level native transferler
+- top-level contract call'lar
+- incoming, outgoing ve self yönleri
+- SQLite üzerinde kalıcı activity geçmişi
+- WebSocket realtime güncellemeleri
+- bağlantı koptuğunda HTTP polling ile recovery
 
-## 📊 Classification Taxonomy
+Agent Mode read-only'dir; private key istemez, wallet bağlantısı veya transaction signing gerektirmez.
 
-GhostGuard classifies events into clear, proof-grounded security states:
+### Kanıt odaklı görselleştirme
 
-| Classification | Meaning | On-Chain Evidence Required |
-|---|---|---|
-| 🟢 **`VERIFIED_DEMO_TRANSFER`** | Legitimate Token Transfer | Receipt `SUCCESS`, `log.address == trustedTokenAddress`, and transfer topics correctly decoded. |
-| 🔴 **`SUSPICIOUS_EVENT`** | Event Spoofing / Decoy | Receipt `SUCCESS`, but `log.address != trustedTokenAddress`. Emitted by a third-party contract without moving token balances. |
-| 🟡 **`NEEDS_REVIEW`** | Inconclusive Evidence | Unknown emitter, partial receipt, or unallowlisted contract. Avoids false-positive accusations. |
-| ⚪ **`FAILED_TRANSACTION`** | Reverted Execution | Receipt `STATUS == 0`. Execution reverted on-chain. |
-| 🔵 **`PENDING`** | Mempool / Unconfirmed | Transaction has not been finalized into a block receipt yet. |
+Evidence Inspector, activity akışını animasyonlu bir account graph olarak gösterir:
+
+| Görsel durum | Anlam |
+|---|---|
+| Yeşil | Incoming aktivite |
+| Sarı | Outgoing aktivite |
+| Kırmızı | Backend tarafından deterministik olarak suspicious bulunan evidence |
+| Mor | Kanıt yetersiz; manuel inceleme gerekli |
+
+Direction ve trust verdict'i bilerek ayrı tutulur. Her outgoing işlem suspicious değildir; her incoming event de otomatik olarak güvenilir sayılmaz.
 
 ---
 
-## 📂 Monorepo Structure
+## Canlı demo ve kanıtlar
 
-```text
-ghostguard/
-├── contracts/                # Foundry smart contract workspace
-│   ├── src/
-│   │   ├── DemoToken.sol     # Minimal ERC-20 with real balance mutations
-│   │   └── DemoEventOnly.sol # Decoy contract emitting transfer events
-│   ├── test/
-│   │   └── DemoContracts.t.sol # Formal proofs of balance vs event separation
-│   ├── script/
-│   │   └── DeployAndSeed.s.sol # Monad Testnet deployment & seeding script
-│   └── foundry.toml          # Solidity 0.8.28 compiler & optimizer config
-├── backend/                  # Fastify & Ingestion engine
-│   ├── src/
-│   │   ├── analyzer/         # Pure deterministic receipt & emitter analyzer
-│   │   ├── api/              # Fastify REST endpoints, error mapping & CORS
-│   │   ├── watcher/          # Monad RPC log scanner, SQLite store & Resend email
-│   │   ├── config/           # Strictly typed environment configuration
-│   │   └── server.ts         # Unified server entrypoint
-│   └── tsconfig.json
-├── frontend/                 # React 19 + TypeScript dashboard
-│   ├── src/
-│   │   ├── components/       # Evidence panels, search, presets & live monitors
-│   │   ├── hooks/            # Analysis state machines & polling
-│   │   ├── services/         # Typed HTTP & WebSocket client
-│   │   └── pages/            # Dashboard main page
-│   └── vite.config.ts
-├── shared/                   # Shared TypeScript domain models & API contracts
-│   └── types/index.ts        # Canonical SecurityFinding, Request & Response types
-├── docs/                     # Engineering documentation suite
-│   ├── ARCHITECTURE.md       # Pipeline architecture & system design
-│   ├── API_CONTRACT.md       # REST & WebSocket specifications
-│   ├── DEMO.md               # 90-second judge demo runbook & hashes
-│   ├── PLAN.md               # Phased roadmap & team ownership
-│   └── STATUS.md             # Verification logs & on-chain audit trail
-└── render.yaml               # Infrastructure-as-code deployment blueprint
-```
+| Kaynak | Değer |
+|---|---|
+| Unified uygulama | [ghostguard-unified.onrender.com](https://ghostguard-unified.onrender.com) |
+| Liveness | [`/health/live`](https://ghostguard-unified.onrender.com/health/live) |
+| Chain ID | `10143` — Monad Testnet |
+| Trusted DemoToken | [`0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`](https://testnet.monadscan.com/address/0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639) |
+| DemoEventOnly | [`0xa7836d1245593d16929a3Eea3Aa34461EF08F474`](https://testnet.monadscan.com/address/0xa7836d1245593d16929a3Eea3Aa34461EF08F474) |
+| Gerçek transfer örneği | [`0x22b9eb3a...df57f6d1f`](https://testnet.monadscan.com/tx/0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f) |
+| Event spoof örneği | [`0x321987f4...cbde07c4`](https://testnet.monadscan.com/tx/0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4) |
+
+Public Render instance'ı free plan üzerinde çalıştığı için cold start, sleep ve ephemeral filesystem davranışları görülebilir. Canlı durum için `/health/live`; RPC erişimi için `/health` kullanılmalıdır.
 
 ---
 
-## 🛠️ Local Development & Quickstart
+## Hızlı başlangıç
 
-### Prerequisites
-* **Node.js**: `v22.2.0+` (Required for native `node:sqlite` support)
-* **npm**: `v10+`
-* **Foundry**: `forge 1.8.6+` (For smart contract testing and deployment)
+### Gereksinimler
 
-### 1. Installation
+- Node.js `22+`
+- npm `10+`
+- Foundry — yalnızca Solidity sözleşmelerini test/deploy etmek için
+- Monad Testnet erişimi — backend çalışırken RPC endpoint'i gereklidir
+
+### Kurulum
+
 ```bash
 git clone https://github.com/aposalik/ghostguard.git
 cd ghostguard
 npm install
-```
-
-### 2. Configure Environment
-```bash
 cp .env.example backend/.env.local
 ```
-Configure your local environment variables in `backend/.env.local`:
-```env
-MONAD_RPC_URL=https://testnet-rpc.monad.xyz
-TRUSTED_DEMO_TOKEN_ADDRESS=0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639
-DEMO_EVENT_ONLY_ADDRESS=0xa7836d1245593d16929a3Eea3Aa34461EF08F474
-PORT=3000
-```
 
-### 3. Run Smart Contract Tests (Foundry)
-```bash
-forge test --root contracts -vvv
-```
-Output:
-```text
-[PASS] testEventOnlyEmitsTransferShapeWithoutChangingTokenBalances()
-[PASS] testEventOnlyRejectsNonOwner()
-[PASS] testRealTransferChangesBalancesAndEmitsFromToken()
-Suite result: ok. 3 passed; 0 failed; 0 skipped
-```
+`backend/.env.local` içinde en azından `MONAD_RPC_URL` değerini kontrol edin. Local frontend varsayılan olarak backend'e `http://localhost:3000` üzerinden bağlanır.
 
-### 4. Run Verification Suite
-Run linting, type-checking, unit tests, and builds across all workspaces:
-```bash
-npm run check
-```
+### Geliştirme sunucuları
 
-### 5. Start Development Servers
+İki terminal açın:
+
 ```bash
-# Terminal 1: Start Backend API & Watcher
+# Terminal 1 — Fastify API, watcher ve WebSocket
 npm run dev:backend
+```
 
-# Terminal 2: Start Frontend Dashboard
+```bash
+# Terminal 2 — React/Vite dashboard
 npm run dev:frontend
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+Ardından:
+
+- Frontend: <http://localhost:5173>
+- Try It: <http://localhost:5173/#/try-it>
+- Backend health: <http://localhost:3000/health>
+- Liveness: <http://localhost:3000/health/live>
+
+> [!TIP]
+> Port `5173` başka bir uygulama tarafından kullanılıyorsa Vite'ın terminalde yazdırdığı gerçek portu kullanın. Frontend'in `VITE_API_BASE_URL` değeri backend'e erişebilen bir origin olmalıdır.
+
+### Unified production build
+
+Fastify'ın frontend build'ini aynı origin üzerinden servis ettiği unified build:
+
+```bash
+npm run build:unified
+npm start
+```
 
 ---
 
-## 📡 API Contract (v1)
+## Nasıl çalışır
 
-### `POST /api/v1/transactions/analyze`
-Analyzes an on-chain transaction receipt against expected token contracts.
+### 1. Receipt ve log analizi
 
-#### Request:
-```json
-{
-  "transactionHash": "0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f",
-  "expectedTokenAddress": "0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639"
-}
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client / Dashboard
+    participant API as Fastify API
+    participant RPC as Monad JSON-RPC
+    participant Analyzer as Deterministic Analyzer
+    participant Store as SQLite
+
+    Client->>API: POST /api/v1/transactions/analyze
+    API->>RPC: eth_chainId + eth_getTransactionReceipt
+    RPC-->>API: Receipt + logs
+    API->>Analyzer: Decode and classify
+    Analyzer->>Analyzer: Validate signature, topics and emitter
+    Analyzer->>Store: Persist suspicious findings when applicable
+    API-->>Client: Canonical transaction + findings
 ```
 
-#### Response (200 OK):
-```json
-{
-  "transaction": {
-    "chainId": 10143,
-    "transactionHash": "0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f",
-    "receiptStatus": "SUCCESS",
-    "blockNumber": "73787270"
-  },
-  "findings": [
-    {
-      "id": "10143:0x22b9eb3a...df57f6d1f:0",
-      "chainId": 10143,
-      "transactionHash": "0x22b9eb3a...df57f6d1f",
-      "logIndex": 0,
-      "blockNumber": "73787270",
-      "classification": "VERIFIED_DEMO_TRANSFER",
-      "actualEmitterAddress": "0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639",
-      "expectedTokenAddress": "0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639",
-      "claimedTransfer": {
-        "from": "0x72a319E6ff8A30A8a524C8559DF185164409b9BD",
-        "to": "0x07eeAf6BB355fa538eb69Df7A3Fdd6C81E3807fB",
-        "amount": "25000000000000000000"
-      },
-      "explanation": "Event emitted directly by the trusted demo token contract. Receipt status is SUCCESS.",
-      "analyzedAt": "2026-10-24T12:00:00.000Z"
-    }
-  ]
-}
+### 2. Agent Mode ingestion
+
+```mermaid
+flowchart LR
+    RPC[Monad JSON-RPC] -->|eth_blockNumber| W[Transfer Watcher]
+    RPC -->|eth_getLogs| W
+    RPC -->|eth_getBlockByNumber| W
+    W --> A[Deterministic Analyzer]
+    A --> DB[(SQLite)]
+    W --> WS[WebSocket Broker]
+    DB --> REST[Monitoring REST API]
+    REST --> UI[React Agent Mode]
+    WS --> UI
 ```
 
-### Account Agent Mode
+Watcher, findings ve activity stream'leri ayrı checkpoint'lerle ilerler:
+
+- `transfer-findings:v2`: ERC-20 log backfill'i
+- `account-transactions:v1`: account watch aktivasyonundan sonraki top-level transaction stream'i
+
+Bu ayrım, yeni bir account izlenmeye başlandığında tüm historical blokların full transaction olarak yeniden taranmasını önler.
+
+> [!NOTE]
+> Internal contract transferleri henüz trace-capable RPC ile indekslenmez. Watcher, log tabanlı token aktivitelerini ve top-level transaction'ları kapsar.
+
+---
+
+## Mimari
+
+GhostGuard üç ana çalışma alanından oluşur:
+
+```text
+ghostguard/
+├── frontend/       React 19 + Vite dashboard
+├── backend/        Fastify API + RPC watcher + SQLite
+├── shared/         Frontend/backend arasında ortak TypeScript tipleri
+└── contracts/      Foundry demo sözleşmeleri ve testleri
+```
+
+### Frontend — presentation ve recovery
+
+- `TryItPage`: account monitoring workbench'i
+- `useAccountMonitor`: watch toggle, activity history, WebSocket reconnect ve polling recovery
+- `EvidenceGraphPanel`: account graph ve kanıt durumları
+- `AccountActivityList`: SQLite'dan gelen kalıcı transaction/activity ledger
+- `services/api.ts`: typed REST ve WebSocket client
+
+Frontend security verdict üretmez. Backend erişilemezse boş veya stale veriyi canlıymış gibi göstermez.
+
+### Backend — source of truth
+
+- `TransactionAnalyzer`: receipt ve emitter doğrulaması
+- `TransferWatcher`: finalized block polling, account watch loading ve activity üretimi
+- `SqliteFindingStore`: watch, activity, finding ve checkpoint persistence
+- Fastify API: analysis, findings, monitoring ve operational status endpoint'leri
+- WebSocket broker: `finding.created` ve `activity.created` event'leri
+- Opsiyonel Resend notifier: suspicious/review finding alert queue'su
+
+### Shared — contract boundary
+
+`shared/types/index.ts`, frontend ve backend'in aynı domain modelini kullanmasını sağlar:
+
+- `SecurityFinding`
+- `MonitoredAccount`
+- `AccountActivity`
+- `AccountActivitiesPage`
+- analyzer ve agent status response tipleri
+
+### Contracts — kontrollü demonstrasyon
+
+- `DemoToken.sol`: gerçek balance mutation yapan minimal ERC-20
+- `DemoEventOnly.sol`: token balance tutmadan `Transfer` biçimli event yayımlayan owner-only demo sözleşmesi
+- `DemoContracts.t.sol`: gerçek balance transferi ile event-only iddiasını ayıran Foundry testleri
+
+---
+
+## Agent Mode
+
+Try It ekranında account adresini elle girebilir veya ileride eklenecek wallet-connect UX'iyle public adresi doldurabilirsiniz. Mevcut Agent Mode, read-only HTTP API kullanır; MetaMask imzası istemez.
 
 ```http
 GET /api/v1/monitoring/accounts
@@ -292,29 +264,238 @@ GET /api/v1/monitoring/accounts/:address/activities?limit=100&cursor=<opaque>
 WS  /api/v1/events
 ```
 
-The `PUT` body is `{ "enabled": true }` or `{ "enabled": false }`. Disabling a watch pauses future indexing without deleting stored activity. WebSocket clients receive both `finding.created` and `activity.created`; HTTP activity pages remain the durable recovery source.
+Toggle request body:
 
-`direction` (`INCOMING`, `OUTGOING`, `SELF`) and trust `verdict` (`CONFIRMED`, `SUSPICIOUS`, `NEEDS_REVIEW`, `REVERTED`) are independent. An on-chain transaction is real once finalized; red identifies deceptive evidence inside it, not a forged blockchain transaction.
+```json
+{ "enabled": true }
+```
 
----
+`enabled: false` gelecekteki indexing'i durdurur; geçmiş activity satırlarını silmez.
 
-## 👥 Team & Ownership
+Activity modeli:
 
-Built during **Monad Blitz Ankara (24 October 2026)**:
+| Alan | Değerler |
+|---|---|
+| `direction` | `INCOMING`, `OUTGOING`, `SELF` |
+| `kind` | `NATIVE_TRANSFER`, `CONTRACT_CALL`, `TOKEN_TRANSFER` |
+| `verdict` | `CONFIRMED`, `SUSPICIOUS`, `NEEDS_REVIEW`, `REVERTED` |
 
-* **Developer A — Fahad ([@MFahadFaisal](https://github.com/MFahadFaisal)):** Frontend Engineering, UX Architecture, Responsive Design, Agent Mode Graph, and Client Integration.
-* **Developer B — Abdullah Salik ([@aposalik](https://github.com/aposalik)):** Backend Architecture, RPC Watcher, Foundry Smart Contracts, Deterministic Analyzer, SQLite Persistence, and On-Chain Deployment.
-
----
-
-## 📜 Security Policy & Disclaimer
-
-* **Hackathon Demonstration Scope:** GhostGuard is built to highlight and prove deceptive event spoofing and receipt misconceptions. It is an MVP engineered for educational demonstration and on-chain verification.
-* **Deterministic Guardrails:** GhostGuard never hallucinates findings; every classification maps strictly to verifiable receipt status, decoded log topics, and emitter contract addresses.
-* **Confidentiality:** Private keys, seed phrases, and operational secrets are strictly excluded from code, documentation, and version control.
+Bir on-chain transaction'ın gerçek olması, içindeki token transfer iddiasının doğru olduğu anlamına gelmez. GhostGuard'ın kırmızı verdict'i transaction'ı “sahte blockchain işlemi” ilan etmez; deceptive evidence bulunduğunu belirtir.
 
 ---
 
-## 📄 License
+## Analiz sınıflandırmaları
 
-This project is licensed under the [MIT License](LICENSE).
+| Classification | Anlam | Kanıt |
+|---|---|---|
+| `VERIFIED_DEMO_TRANSFER` | Trusted DemoToken tarafından yayımlanan doğrulanmış Transfer | Başarılı receipt, doğru topic'ler ve allowlisted emitter |
+| `SUSPICIOUS_EVENT` | Transfer biçimli fakat trusted token dışı event | Başarılı receipt, decoded claim ve emitter mismatch |
+| `NEEDS_REVIEW` | Kanıt yetersiz veya emitter bilinmiyor | Unknown emitter, eksik log veya tamamlanamayan decode |
+| `FAILED_TRANSACTION` / `REVERTED` | On-chain execution revert olmuş | Receipt status `0` |
+| `PENDING` | Receipt henüz bulunamadı veya finalize olmadı | RPC'de tamamlanmış receipt yok |
+| `CONFIRMED` | Account activity için güvenilir, normal gözlem | Activity türü ve receipt gözlemi tutarlı |
+
+`TOKEN_STATE_SUPPORTS_CLAIM` balance-delta kontrolü henüz uygulanmadığı sürece bilinçli olarak `UNKNOWN` kalabilir. Bilinmeyen kanıt otomatik olarak fraud sayılmaz.
+
+---
+
+## API özeti
+
+### Health
+
+```http
+GET /health
+GET /health/live
+```
+
+- `/health`: RPC bağlantısı ve chain ID kontrolü; sağlıklıysa `200`, degraded ise `503`
+- `/health/live`: process liveness; RPC'den bağımsız `200`
+
+### Transaction analysis
+
+```http
+POST /api/v1/transactions/analyze
+Content-Type: application/json
+```
+
+```json
+{
+  "transactionHash": "0x<64 hex karakter>",
+  "expectedTokenAddress": "0x<40 hex karakter>"
+}
+```
+
+`expectedTokenAddress` opsiyoneldir ve server-side trusted allowlist'i geçersiz kılmaz.
+
+### Findings ve status
+
+```http
+GET /api/v1/findings?limit=20&cursor=<opaque>
+GET /api/v1/agents/status
+```
+
+### Realtime events
+
+```text
+ws://localhost:3000/api/v1/events
+```
+
+Mesaj türleri:
+
+- `finding.created`
+- `activity.created`
+
+Tam sözleşme için [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) dosyasına bakın.
+
+---
+
+## Konfigürasyon
+
+`.env.example` dosyası başlangıç şablonudur. Secret değerlerini `.env.local`, host secret store veya deployment provider üzerinden sağlayın; Git'e yazmayın.
+
+| Değişken | Gerekli | Açıklama |
+|---|---:|---|
+| `MONAD_RPC_URL` | Evet | Monad JSON-RPC HTTP endpoint'i |
+| `TRUSTED_DEMO_TOKEN_ADDRESS` | Hayır | Verified demo emitter allowlist'i |
+| `DEMO_EVENT_ONLY_ADDRESS` | Hayır | Kontrollü event-only demo emitter'i |
+| `HOST` / `PORT` | Hayır | Fastify bind ayarları; varsayılan `0.0.0.0:3000` |
+| `CORS_ORIGINS` | Hayır | Virgülle ayrılmış frontend origin listesi |
+| `DATABASE_URL` | Hayır | SQLite dosya yolu |
+| `WATCH_ENABLED` | Hayır | Watcher için `true` |
+| `MONITORED_WALLET_ADDRESSES` | Hayır | Environment seed account listesi |
+| `WATCH_CONFIRMATIONS` | Hayır | Finality confirmation sayısı; varsayılan `5` |
+| `WATCH_BLOCK_RANGE` | Hayır | Tek RPC log sorgusunun block aralığı |
+| `WATCH_POLL_INTERVAL_MS` | Hayır | Watcher poll aralığı |
+| `WATCH_START_BLOCK` | Hayır | ERC-20 finding backfill başlangıcı |
+| `EMAIL_ENABLED` | Hayır | Resend alert queue'su |
+| `EMAIL_API_KEY` | Email açıksa | Secret; hiçbir zaman commit edilmemeli |
+| `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO` | Email açıksa | Alert sender/recipient |
+| `PRODUCER_ENABLED` | Hayır | Demo transaction producer; varsayılan kapalı |
+| `PRODUCER_PRIVATE_KEY` | Producer açıksa | Yalnızca güvenli host secret olarak sağlanmalı |
+
+### RPC proxy notu
+
+Bazı geliştirme ortamlarında sistem HTTP proxy'sinin TLS sertifikası Monad endpoint'iyle uyumsuz olabilir. Böyle bir ortamda terminal process'i için yalnızca Monad RPC host'unu proxy dışında bırakın:
+
+```bash
+export NO_PROXY=testnet-rpc.monad.xyz
+export no_proxy=testnet-rpc.monad.xyz
+```
+
+TLS doğrulamasını genel olarak kapatmayın ve production'da `--insecure` kullanmayın.
+
+---
+
+## Test ve doğrulama
+
+Tüm JavaScript/TypeScript workspaces için:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Tek komut kalite kapısı:
+
+```bash
+npm run check
+```
+
+Foundry sözleşmeleri için:
+
+```bash
+forge test --root contracts -vvv
+```
+
+Frontend ve backend testleri sırasıyla `frontend/src/**/*.test.ts` ve `backend/src/**/*.test.ts` altında bulunur. Testler deterministic analyzer, RPC validation, SQLite persistence, monitoring API, watcher behavior ve graph mapping'i kapsar.
+
+---
+
+## Deployment
+
+### Unified Render service
+
+`render.yaml`, frontend ve backend'i tek Node web service olarak deploy etmek için blueprint sağlar:
+
+```text
+npm ci && npm run build:unified
+npm start
+```
+
+Fastify production build mevcutsa:
+
+- `/` → React dashboard
+- `/health` ve `/health/live` → health endpoints
+- `/api` → service metadata
+- `/api/v1/*` → REST API
+- `/api/v1/events` → WebSocket
+
+Render free plan'de `DATABASE_URL=/tmp/ghostguard.db` kullanıldığı için restart/spin-down sonrası SQLite geçmişi kalıcı olmayabilir. Kalıcı monitoring için persistent volume veya harici database gerekir.
+
+### Frontend-only deployment
+
+Vercel ve Netlify konfigürasyonları frontend build'i içindir. Frontend-only deployment'da `VITE_API_BASE_URL`, erişilebilir bir GhostGuard backend URL'sine ayarlanmalıdır. Backend olmadan dashboard transaction veya activity sonucu uydurmaz.
+
+---
+
+## Güvenlik ve sınırlar
+
+- GhostGuard private key, seed phrase veya MetaMask signing istemez; Agent Mode read-only'dir.
+- Backend kararları RPC receipt ve log verisini yeniden okuyarak üretir.
+- Browser tarafından gönderilen `expectedTokenAddress`, trusted server-side allowlist'i değiştiremez.
+- API status response'ları private key, RPC credential veya email credential içermez.
+- Event-only demo sözleşmesi owner-only'dir ve yalnızca kontrollü testnet demonstrasyonu içindir.
+- `PRODUCER_ENABLED` varsayılan olarak kapalıdır; açılması gerçek transaction ve gas maliyeti doğurabilir.
+- RPC, explorer ve external email provider dış sistemlerdir; availability garanti edilmez.
+- Public multi-user kullanım için account ownership, authentication, rate limit ve quota henüz eklenmemiştir.
+
+---
+
+## Bilinen sınırlamalar
+
+1. Internal transaction traces henüz indekslenmez.
+2. Token balance-delta kanıtı tüm tokenlar için uygulanmış değildir; ilgili check `UNKNOWN` olabilir.
+3. SQLite store tek instance/local persistence varsayımına dayanır.
+4. Public watchlist endpoint'leri production multi-user isolation için authentication bekler.
+5. Monad RPC rate limitleri ve transient network errors watcher gecikmesine neden olabilir.
+6. MetaMask bağlantısı Agent Mode için gerekli değildir; public address manuel olarak girilebilir.
+
+---
+
+## İlgili dokümantasyon
+
+- [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) — REST ve WebSocket sözleşmesi
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — backend pipeline ve deployment topolojisi
+- [`docs/DEMO.md`](docs/DEMO.md) — 90 saniyelik hackathon demo akışı
+- [`docs/STATUS.md`](docs/STATUS.md) — doğrulama ve implementation durumu
+- [`docs/HANDOFF.md`](docs/HANDOFF.md) — teknik handoff ve sonraki işler
+- [`backend/README.md`](backend/README.md) — backend-specific config ve operasyon notları
+- [`frontend/README.md`](frontend/README.md) — frontend-specific development notları
+- [`contracts/README.md`](contracts/README.md) — Foundry workspace
+
+---
+
+## Katkı
+
+1. Branch oluşturun.
+2. Değişikliği küçük ve doğrulanabilir tutun.
+3. `npm run check` ve ilgili Foundry testlerini çalıştırın.
+4. API/model değişikliklerinde `shared/types`, `docs/API_CONTRACT.md` ve ilgili testleri birlikte güncelleyin.
+5. Secret, private key, seed phrase veya gerçek credential commit etmeyin.
+
+---
+
+## Ekip
+
+Monad Blitz Ankara hackathon çalışması:
+
+- **Fahad Faisal** — frontend engineering, UX architecture, responsive design, Agent Mode graph ve client integration
+- **Abdullah Salik** — backend architecture, RPC watcher, deterministic analyzer, SQLite persistence, Foundry contracts ve on-chain deployment
+
+---
+
+## Lisans
+
+Bu proje [MIT License](LICENSE) altında yayımlanmıştır.
