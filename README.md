@@ -20,6 +20,12 @@ Bir transaction başarılı olabilir ve `Transfer(address,address,uint256)` biç
 > Bu proje bir hackathon/MVP demonstrasyonudur. Public deployment ve demo sözleşmeleri vardır; ancak production seviyesinde multi-user ownership, authentication, quota ve kalıcı disk stratejisi henüz tamamlanmamıştır.
 
 ---
+<img width="1294" height="810" alt="Screenshot 2026-10-25 at 1 11 27 PM" src="https://github.com/user-attachments/assets/2bed2687-0344-463b-a96b-2ce312e12b5e" />
+
+---
+
+<img width="1239" height="810" alt="Screenshot 2026-10-25 at 1 07 31 PM" src="https://github.com/user-attachments/assets/ad8f0870-acbd-4109-a363-a12337b4055b" />
+
 
 ## İçindekiler
 
