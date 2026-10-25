@@ -69,10 +69,12 @@
 ### Monad Testnet deployment ve gerçek API doğrulaması
 
 - `DemoToken`: `0x21A48A0f107BaF3DC2eDA13e4aB6B7e624397639`.
-- `DemoEventOnly`: `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
+- `DemoEventOnly` (Seed): `0xa7836d1245593d16929a3Eea3Aa34461EF08F474`.
+- `DemoEventOnly` (Live Spoofer): `0xE8c493C05C08ab458391af1D71e1B8939fd5a392` (Tx: `0x21a8a63f9f0360b8a05266210191dbdceeb3ea2799cffa5ad87b6c2d6ae139b2`).
 - Gerçek transfer tx `0x22b9eb3a62f096515a44a319fc119ea4411c1fb3c2652915497ecd4df57f6d1f` başarılı; recipient `25 GGD` aldı.
 - Event-only tx `0x321987f432eefd92503aadd386a18d4c7df518653046cdb9e37b54e8cbde07c4` başarılı; DemoToken balance değiştirmedi.
 - Local backend gerçek RPC üzerinde sırasıyla `VERIFIED_DEMO_TRANSFER` ve `SUSPICIOUS_EVENT` döndürdü.
+- **2026-10-25 100-Transaction Storm Doğrulaması:** `scripts/flood_transactions.py` ile 25 rastgele cüzdan oluşturuldu; 100 adet işlem (40x Spoofed Fake Transfer, 30x Incoming MON, 30x Outgoing MON) paralel olarak 1.74 saniyede Monad Testnet'e broadcast edildi ve 100/100 başarıyla onaylandı. Monitored hesap `0x351deba8041a4359399c5af0e11f8e66ed300492` canlı workbench üzerinde tüm incoming, outgoing ve red suspicious event'leri anlık yakaladı.
 
 ### P1 watcher, persistence ve email altyapısı
 
